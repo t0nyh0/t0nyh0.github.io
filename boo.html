@@ -30,9 +30,9 @@
       <i>Values shown below are from Armoury.</i>
       <div class="items-center inline-block ml-8 font-normal">
         Centric Action:
-        <div class="h-3 w-3 bg-red-500 ml-4 mr-1 inline-block"></div> Delete
+        <div class="h-3 w-3 bg-red-300 ml-4 mr-1 inline-block"></div> Delete
         <div class="h-3 w-3 bg-yellow-300 ml-4 mr-1 inline-block"></div> Update
-        <div class="h-3 w-3 bg-green-500 ml-4 mr-1 inline-block"></div> Add
+        <div class="h-3 w-3 bg-green-300 ml-4 mr-1 inline-block"></div> Add
       </div>
     </div>
     <div id="myGrid" class="ag-theme-material flex-1"></div>
@@ -49,8 +49,8 @@
 
     const cellStyleComp = (params) => {
       if (params.data.yellow?.includes(params.colDef.field)) return { backgroundColor: '#FDE047' }
-      if (params.data.green?.includes(params.colDef.field)) return { backgroundColor: '#22C55E' }
-      if (params.data.red?.includes(params.colDef.field)) return { backgroundColor: '#EF4444' }
+      if (params.data.green?.includes(params.colDef.field)) return { backgroundColor: '#86EFAC' }
+      if (params.data.red?.includes(params.colDef.field)) return { backgroundColor: '#FCA5A5' }
 
       return null
     }

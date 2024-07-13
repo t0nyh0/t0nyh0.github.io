@@ -1,0 +1,145 @@
+<html lang="en">
+
+<head>
+  <title>ARMOURY/CENTRIC SUPER DUPER MAGICAL COMPARATOR</title>
+  <script src="https://cdn.jsdelivr.net/npm/ag-grid-community/dist/ag-grid-community.min.js"></script>
+  <script src="https://unpkg.com/read-excel-file@5.x/bundle/read-excel-file.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body>
+  <div class="flex flex-col h-screen">
+    <div id="app" @vue:mounted="mounted">
+      <div class="mb-4 px-8 py-6 border-b relative">
+        <h1 class="text-3xl font-black mb-2">ARMOURY/CENTRIC SUPER DUPER MAGICAL COMPARATOR</h1>
+        <div>
+          Made with ❤️ by Husband.
+        </div>
+
+        <div class="mt-4">
+          <div class="border inline-block p-2 mr-2"> <input type="file" ref="file" /></div>
+          <a class="bg-blue-600 text-white p-3 rounded-full text-sm font-bold px-6" @click="onCompare">WOW Magic buttan</a>
+        </div>
+
+        <div class="w-48 absolute bottom-0 right-2">
+          <img src="https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExaGZhb2xneGZ2cm9ibXVoejduYWY0ZnF2MTRlbmI3bXVpM3Q1a281aSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/IBFvMzgB6fFmysKsmP/giphy.webp" />
+        </div>
+      </div>
+    </div>
+    <div class="px-4 mb-4 font-semibold">
+      <i>Values shown below are from Armoury.</i>
+      <div class="items-center inline-block ml-8 font-normal">
+        Centric Action:
+        <div class="h-3 w-3 bg-red-500 ml-4 mr-1 inline-block"></div> Delete
+        <div class="h-3 w-3 bg-yellow-300 ml-4 mr-1 inline-block"></div> Update
+        <div class="h-3 w-3 bg-green-500 ml-4 mr-1 inline-block"></div> Add
+      </div>
+    </div>
+    <div id="myGrid" class="ag-theme-material flex-1"></div>
+  </div>
+
+  <script>
+    const myGridElement = document.querySelector('#myGrid');
+    const grid = agGrid.createGrid(myGridElement, {});
+  </script>
+
+  <script type="module">
+    import { createApp } from 'https://unpkg.com/petite-vue?module'
+
+    const cellStyleComp = (params) => {
+      if (params.data.yellow?.includes(params.colDef.field)) return { backgroundColor: '#FDE047' }
+      if (params.data.green?.includes(params.colDef.field)) return { backgroundColor: '#22C55E' }
+      if (params.data.red?.includes(params.colDef.field)) return { backgroundColor: '#EF4444' }
+
+      return null
+    }
+
+    const COLUMN_DEFS = [
+      { "field": "Name", width: 100, cellStyle: { "background-color": "#fafafa" }, pinned: true },
+      { "field": "Description", width: 320, cellStyle: cellStyleComp },
+      { "field": "Tol(+)", "width": 100, cellStyle: cellStyleComp },
+      { "field": "Tol(-)", "width": 100, cellStyle: cellStyleComp },
+      { "field": "XS", "width": 100, cellStyle: cellStyleComp },
+      { "field": "SM", "width": 100, cellStyle: cellStyleComp },
+      { "field": "MD", "width": 100, cellStyle: cellStyleComp },
+      { "field": "LG", "width": 100, cellStyle: cellStyleComp },
+      { "field": "XL", "width": 100, cellStyle: cellStyleComp },
+      { "field": "XXL", "width": 100, cellStyle: cellStyleComp }
+    ]
+
+    createApp({
+      async onCompare() {
+        const file = this.$refs['file'].files[0]
+
+        this.compare(
+          await readXlsxFile(file, { sheet: 1 }),
+          await readXlsxFile(file, { sheet: 2 })
+        )
+      },
+
+      transformArr(arr) {
+        const header = arr[0]
+
+        return arr.slice(1).map((row) => {
+          const obj = {}
+
+          row.forEach((cell, idx) => {
+            obj[header[idx]] = idx > 1 ? parseFloat(eval(cell.toString())) : cell.toString()
+          })
+
+          return obj
+        })
+      },
+
+      compare(armoury, centric) {
+        const armouryRows = this.transformArr(armoury)
+        const centricRows = this.transformArr(centric)
+
+        const header = armoury[0]
+        const tableRows = []
+
+        armouryRows.forEach((x) => {
+          const c = centricRows.find((c) => c.Name === x.Name)
+          const row = JSON.parse(JSON.stringify(x))
+
+          if (c) {
+            header.forEach((h) => {
+              if (x[h] !== c[h]) {
+                row.yellow = row.yellow || []
+                row.yellow.push(h)
+              }
+            })
+          }
+          else row.green = header.slice()
+
+          tableRows.push(row)
+        })
+
+        centricRows.forEach((x) => {
+          const a = armouryRows.find((a) => a.Name === x.Name)
+          const row = JSON.parse(JSON.stringify(x))
+
+          if (!a) {
+            row.red = header.slice()
+            tableRows.push(row)
+          }
+        })
+
+        tableRows.sort((a, b) => a.Name.localeCompare(b.Name))
+
+        grid.setGridOption('columnDefs', COLUMN_DEFS)
+        grid.setGridOption('rowData', tableRows)
+
+        grid.hideOverlay()
+      },
+
+      mounted() {
+        const armoury = [["Name", "Description", "Tol(+)", "Tol(-)", "XS", "SM", "MD", "LG", "XL", "XXL"], ["WA005", "WB Height", 0.125, "1/8", 2, 2, 2, 2, 2, 2], ["WA025", "Waist Width at Edge - Relaxed", 0.5, "1/2", 12.5, 13.5, 14.5, 16, 18, 20], ["WA035", "Waist Width at Seam - Minimum Stretch", 0, 0, 18, 19, 20, 21.5, 23.5, 25.5], ["HP020", "Low Hip/Seat Placement from Top Edge", 0, 0, 4.875, 5.25, 5.625, 6, 6.375, 6.75], ["HP025", "Low Hip/Seat - 3pt", 0.5, "1/2", 18.875, 19.875, 20.875, 22.375, 24.375, 26.375], ["LG015", "Thigh 1'' from Center of Gusset", 0.375, "3/8", 13.625, 14.125, 14.625, 15.375, 16.375, 17.375], ["LG140", "Leg Opening at Edge - Mid-thigh Inseam (Short)", 0.375, "3/8", 13, 13.375, 13.875, 14.5, 15.375, 16.25], ["DE141", "Bottom Hem Height (Bottoms)", "1/8", "1/8", 1, 1, 1, 1, 1, 1], ["DE220", "Drawcord Length - Exposed with Garment Relaxed (Bottoms)", "1/2", "1/2", 10, 10, 10, 10, 10, 10], ["DE545", "Side Vent Length (Bottoms)", "1/8", "1/8", 1.5, 1.5, 1.5, 1.5, 1.5, 1.5], ["IO150", "Inseam from Center of Gusset - Shorts", "3/8", "3/8", 5, 5, 5, 5, 5, 5], ["RS025", "Front Rise with Gusset - from Top Edge to Gusset Seam", "1/4", "1/4", 10, 10.375, 10.75, 11.125, 11.5, 11.875], ["RS030", "Back Rise with Gusset - from Top Edge to Gusset Seam", "1/4", "1/4", 13.375, 13.75, 14.125, 14.5, 14.875, 15.25], ["RS035", "Gusset Width - Rise to Rise", "1/4", "1/4", 3, 3, 3, 3, 3, 3], ["PO340", "On-Seam Pocket Placement from Top Edge", "1/4", "1/4", 2.5, 2.5, 2.5, 2.5, 2.5, 2.5], ["PO345", "Front Pocket Opening", "1/4", "1/4", 6.75, 6.75, 7, 7, 7.25, 7.25], ["PO351", "Front Pocket Bag Length at Center (Bottoms)", "1/4", "1/4", 13.75, 13.75, 14, 14, 14.25, 14.25], ["PO355", "Front Pocket Bag Width (Bottoms)", "1/4", "1/4", 6.75, 6.75, 7, 7, 7.25, 7.25], ["EM235", "UA Logo - Vertical from Bottom to Center - Front", "1/8", "1/8", 2, 2, 2, 2, 2, 2], ["EM260", "UA Logo - Horizontal from Outseam to Center (Leg Opening) - Front", "1/8", "1/8", 2.375, 2.375, 2.375, 2.375, 2.375, 2.375], ["WC000", "INNER SHORT", "1/8", "1/8", 0, 0, 0, 0, 0, 0], ["HP020", "Low Hip/Seat Placement from Top Edge", 0, 0, 3.875, 4.25, 4.625, 5, 5.375, 5.75], ["HP025", "Low Hip/Seat - 3pt - R", "1/2", "1/2", 11.75, 12.75, 13.75, 15.25, 17, 18.75], ["UW185", "Center Front Panel Length", "1/4", "1/4", 6.125, 6.5, 6.875, 7.25, 7.625, 8], ["UW190", "Center Front Panel Width at Waist", "1/8", "1/8", 5.375, 5.375, 5.375, 5.375, 5.375, 5.375], ["UW200", "Center Front Panel Width Placement from Bottom of Waistband", 0, 0, 4.875, 5.25, 5.625, 6, 6.375, 6.75], ["UW205", "Center Front Panel Width", "1/8", "1/8", 3.25, 3.25, 3.25, 3.25, 3.25, 3.25], ["UW210", "Center Front Panel Width at Gusset Seam", "1/8", "1/8", 2.5, 2.5, 2.5, 2.5, 2.5, 2.5], ["UW215", "Center Back Panel Length", "1/4", "1/4", 8.375, 8.75, 9.125, 9.5, 9.875, 10.25], ["UW220", "Center Back Panel Width at Waist-R", "1/8", "1/8", 10.125, 11.125, 11.875, 12.375, 12.875, 13.375], ["UW230", "Center Back Panel Width Placement from Bottom of Waistband", 0, 0, 4.875, 5.25, 5.625, 6, 6.375, 6.75], ["UW235", "Center Back Panel Width-R", "1/8", "1/8", 7.875, 8, 8.125, 8.25, 8.375, 8.5], ["UW240", "Center Back Panel Width at Gusset Seam", "1/8", "1/8", 4, 4, 4, 4, 4, 4], ["LG015", "Thigh 1'' from Center of Gusset - R", "3/8", "3/8", 8.25, 8.75, 9.25, 10, 10.75, 11.5], ["LG140", "Leg Opening at Edge - Mid-thigh Inseam (Short)", "3/8", "3/8", 5.5, 5.875, 6.375, 7, 7.875, 8.75], ["LG145", "Leg Opening - Min. Stretch - Mid-thigh Inseam (Shorts) - R", 0, 0, 10.75, 10.75, 10.75, 10.75, 11.5, 12.25], ["IO095", "Inseam from Gusset Seam - Shorts", "3/8", "3/8", 10, 10, 10, 10, 10, 10], ["RS035", "Gusset Width - Rise to Rise", "1/4", "1/4", 3.75, 3.75, 3.75, 3.75, 3.75, 3.75]]
+        const centric = [["Name", "Description", "Tol(+)", "Tol(-)", "XS", "SM", "MD", "LG", "XL", "XXL"], ["WA005", "WB Height", 0.125, "1/8", 2, 2, 2, 2, 2, 2], ["WA025", "Waist Width at Edge - Relaxed", 0.5, "1/2", 12.5, 13.5, 14.5, 16, 18, 20], ["WA035", "Waist Width at Seam - Minimum Stretch", 0, 0, 18, 19, 20, 21.5, 23.5, 25.5], ["HP020", "Low Hip/Seat Placement from Top Edge", 0, 0, 4.875, 5.25, 5.625, 6, 6.375, 6.75], ["HP025", "Low Hip/Seat - 3pt", 0.5, "1/2", 18.875, 19.875, 20.875, 22.375, 24.375, 26.375], ["LG015", "Thigh 1'' from Center of Gusset", 0.375, "3/8", 13.625, 14.125, 14.625, 15.375, 16.375, 17.375], ["LG140", "Leg Opening at Edge - Mid-thigh Inseam (Short)", 0.375, "3/8", 13, 13.375, 13.875, 14.5, 15.375, 16.25], ["DE141", "Bottom Hem Height (Bottoms)", "1/8", "1/8", 1, 1, 1, 1, 1, 1], ["DE220", "Drawcord Length - Exposed with Garment Relaxed (Bottoms)", "1/2", "1/2", 10, 10, 10, 10, 10, 10], ["DE545", "Side Vent Length (Bottoms)", "1/8", "1/8", 1.5, 1.5, 1.5, 1.5, 1.5, 1.5], ["IO150", "Inseam from Center of Gusset - Shorts", "3/8", "3/8", 5, 5, 5, 5, 5, 5], ["RS025", "Front Rise with Gusset - from Top Edge to Gusset Seam", "1/4", "1/4", 10, 10.375, 10.75, 11.125, 11.5, 11.875], ["RS030", "Back Rise with Gusset - from Top Edge to Gusset Seam", "1/4", "1/4", 13.375, 13.75, 14.125, 14.5, 14.875, 15.25], ["RS035", "Gusset Width - Rise to Rise", "1/4", "1/4", 3, 3, 3, 3, 3, 3], ["PO340", "On-Seam Pocket Placement from Top Edge", "1/4", "1/4", 2.5, 2.5, 2.5, 2.5, 2.5, 2.5], ["PO345", "Front Pocket Opening", "1/4", "1/4", 6.75, 6.75, 7, 7, 7.25, 7.25], ["PO351", "Front Pocket Bag Length at Center (Bottoms)", "1/4", "1/4", 13.75, 13.75, 14, 14, 14.25, 14.25], ["PO355", "Front Pocket Bag Width (Bottoms)", "1/4", "1/4", 6.75, 6.75, 7, 7, 7.25, 7.25], ["EM235", "UA Logo - Vertical from Bottom to Center - Front", "1/8", "1/8", 2, 2, 2, 2, 2, 2], ["EM260", "UA Logo - Horizontal from Outseam to Center (Leg Opening) - Front", "1/8", "1/8", 2.375, 2.375, 2.375, 2.375, 2.375, 2.375], ["WC000", "INNER SHORT", "1/8", "1/8", 0, 0, 0, 0, 0, 0], ["HP020", "Low Hip/Seat Placement from Top Edge", 0, 0, 3.875, 4.25, 4.625, 5, 5.375, 5.75], ["HP025", "Low Hip/Seat - 3pt - R", "1/2", "1/2", 11.75, 12.75, 13.75, 15.25, 17, 18.75], ["UW185", "Center Front Panel Length", "1/4", "1/4", 6.125, 6.5, 6.875, 7.25, 7.625, 8], ["UW190", "Center Front Panel Width at Waist", "1/8", "1/8", 5.375, 5.375, 5.375, 5.375, 5.375, 5.375], ["UW200", "Center Front Panel Width Placement from Bottom of Waistband", 0, 0, 4.875, 5.25, 5.625, 6, 6.375, 6.75], ["UW205", "Center Front Panel Width", "1/8", "1/8", 3.25, 3.25, 3.25, 3.25, 3.25, 3.25], ["UW210", "Center Front Panel Width at Gusset Seam", "1/8", "1/8", 2.5, 2.5, 2.5, 2.5, 2.5, 2.5], ["UW215", "Center Back Panel Length", "1/4", "1/4", 8.375, 8.75, 9.125, 9.5, 9.875, 10.25], ["UW220", "Center Back Panel Width at Waist-R", "1/8", "1/8", 10.125, 11.125, 11.875, 12.375, 12.875, 13.375], ["UW230", "Center Back Panel Width Placement from Bottom of Waistband", 0, 0, 4.875, 5.25, 5.625, 6, 6.375, 6.75], ["UW235", "Center Back Panel Width-R", "1/8", "1/8", 7.875, 8, 8.125, 8.25, 8.375, 8.5], ["UW240", "Center Back Panel Width at Gusset Seam", "1/8", "1/8", 4, 4, 4, 4, 4, 4], ["LG015", "Thigh 1'' from Center of Gusset - R", "3/8", "3/8", 8.25, 8.75, 9.25, 10, 10.75, 11.5], ["LG140", "Leg Opening at Edge - Mid-thigh Inseam (Short)", "3/8", "3/8", 5.5, 5.875, 6.375, 7, 7.875, 8.75], ["LG145", "Leg Opening - Min. Stretch - Mid-thigh Inseam (Shorts) - R", 0, 0, 10.75, 10.75, 10.75, 10.75, 11.5, 12.25], ["IO095", "Inseam from Gusset Seam - Shorts", "3/8", "3/8", 10, 10, 10, 10, 10, 10], ["RS035", "Gusset Width - Rise to Rise", "1/4", "1/4", 3.75, 3.75, 3.75, 3.75, 3.75, 3.75]]
+        this.compare(armoury, centric)
+      }
+    }).mount('#app')
+  </script>
+</body>
+
+</html>

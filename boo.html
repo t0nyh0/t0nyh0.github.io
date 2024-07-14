@@ -47,7 +47,40 @@
   <script type="module">
     import { createApp } from 'https://unpkg.com/petite-vue?module'
 
+    const numberToFraction = function (amount) {
+      // This is a whole number and doesn't need modification.
+      if (parseFloat(amount) === parseInt(amount)) {
+        return amount;
+      }
+      // Next 12 lines are cribbed from https://stackoverflow.com/a/23575406.
+      var gcd = function (a, b) {
+        if (b < 0.0000001) {
+          return a;
+        }
+        return gcd(b, Math.floor(a % b));
+      };
+      var len = amount.toString().length - 2;
+      var denominator = Math.pow(10, len);
+      var numerator = amount * denominator;
+      var divisor = gcd(numerator, denominator);
+      numerator /= divisor;
+      denominator /= divisor;
+      var base = 0;
+      // In a scenario like 3/2, convert to 1 1/2
+      // by pulling out the base number and reducing the numerator.
+      if (numerator > denominator) {
+        base = Math.floor(numerator / denominator);
+        numerator -= base * denominator;
+      }
+      amount = Math.floor(numerator) + '/' + Math.floor(denominator);
+      if (base) {
+        amount = base + ' ' + amount;
+      }
+      return amount;
+    };
+
     const cellStyleComp = (params) => {
+      if (params.data.duplicate?.includes(params.colDef.field)) return { backgroundColor: '#FCA5A5' }
       if (params.data.yellow?.includes(params.colDef.field)) return { backgroundColor: '#FDE047' }
       if (params.data.green?.includes(params.colDef.field)) return { backgroundColor: '#86EFAC' }
       if (params.data.red?.includes(params.colDef.field)) return { backgroundColor: '#FCA5A5' }
@@ -114,6 +147,8 @@
                 row.yellow = row.yellow || []
                 row.yellow.push(h)
               }
+
+              row[h] = isNaN(x[h]) ? x[h].toString() : numberToFraction(x[h]).toString()
             })
           }
           else row.green = header.slice()

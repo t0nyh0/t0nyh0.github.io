@@ -85,7 +85,7 @@
           const obj = {}
 
           row.forEach((cell, idx) => {
-            obj[header[idx]] = idx > 1 ? parseFloat(eval(cell.toString())) : cell.toString()
+            obj[header[idx]] = idx > 1 ? Math.abs(parseFloat(eval(cell.toString()))) : cell.toString()
           })
 
           return obj

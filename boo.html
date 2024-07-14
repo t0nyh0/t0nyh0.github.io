@@ -126,7 +126,12 @@
           }
         })
 
-        tableRows.sort((a, b) => a.Name.localeCompare(b.Name))
+        tableRows.sort((a, b) => {
+          const aIdx = centricRows.findIndex((c) => c.Name === a.Name) || 0
+          const bIdx = centricRows.findIndex((c) => c.Name === b.Name) || 0
+
+          return aIdx - bIdx
+        })
 
         grid.setGridOption('columnDefs', COLUMN_DEFS)
         grid.setGridOption('rowData', tableRows)

@@ -56,6 +56,7 @@
     }
 
     const COLUMN_DEFS = [
+      { "field": "Index", width: 100, cellStyle: { "background-color": "#fafafa" }, pinned: true },
       { "field": "Name", width: 100, cellStyle: { "background-color": "#fafafa" }, pinned: true },
       { "field": "Description", width: 320, cellStyle: cellStyleComp },
       { "field": "Tol(+)", "width": 100, cellStyle: cellStyleComp },
@@ -81,8 +82,10 @@
       transformArr(arr) {
         const header = arr[0]
 
-        return arr.slice(1).map((row) => {
-          const obj = {}
+        return arr.slice(1).map((row, idx) => {
+          const obj = {
+            Index: idx + 1
+          }
 
           row.forEach((cell, idx) => {
             obj[header[idx]] = idx > 1 ? Math.abs(parseFloat(eval(cell.toString()))) : cell.toString()
@@ -124,13 +127,6 @@
             row.red = header.slice()
             tableRows.push(row)
           }
-        })
-
-        tableRows.sort((a, b) => {
-          const aIdx = armouryRows.findIndex((c) => c.Name === a.Name) || 0
-          const bIdx = armouryRows.findIndex((c) => c.Name === b.Name) || 0
-
-          return aIdx - bIdx
         })
 
         grid.setGridOption('columnDefs', COLUMN_DEFS)

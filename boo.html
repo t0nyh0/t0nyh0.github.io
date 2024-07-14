@@ -33,6 +33,7 @@
         <div class="h-3 w-3 bg-red-300 ml-4 mr-1 inline-block"></div> Delete
         <div class="h-3 w-3 bg-yellow-300 ml-4 mr-1 inline-block"></div> Update
         <div class="h-3 w-3 bg-green-300 ml-4 mr-1 inline-block"></div> Add
+        <div class="h-3 w-3 bg-purple-400 ml-4 mr-1 inline-block"></div> Duplicate
       </div>
     </div>
     <div id="myGrid" class="ag-theme-material flex-1"></div>
@@ -80,7 +81,7 @@
     };
 
     const cellStyleComp = (params) => {
-      if (params.data.duplicate?.includes(params.colDef.field)) return { backgroundColor: '#FCA5A5' }
+      if (params.data.duplicates?.includes(params.colDef.field)) return { backgroundColor: '#C084FC' }
       if (params.data.yellow?.includes(params.colDef.field)) return { backgroundColor: '#FDE047' }
       if (params.data.green?.includes(params.colDef.field)) return { backgroundColor: '#86EFAC' }
       if (params.data.red?.includes(params.colDef.field)) return { backgroundColor: '#FCA5A5' }
@@ -152,6 +153,8 @@
             })
           }
           else row.green = header.slice()
+
+          if (aRows.length > 1) row.duplicates = header.slice()
 
           tableRows.push(row)
         })

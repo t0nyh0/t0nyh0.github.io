@@ -9,7 +9,7 @@
 
 <body>
   <div class="flex flex-col h-screen">
-    <div id="app" @vue:mounted="mounted">
+    <div id="app">
       <div class="mb-4 px-8 py-6 border-b relative">
         <h1 class="text-3xl font-black mb-2">ARMOURY/CENTRIC SUPER DUPER MAGICAL COMPARATOR</h1>
         <div>
@@ -103,7 +103,9 @@
         const tableRows = []
 
         armouryRows.forEach((x) => {
-          const c = centricRows.find((c) => c.Name === x.Name)
+          const aRows = armouryRows.filter((a) => a.Name === x.Name)
+          const aIdx = aRows.findIndex((ar) => ar.Index === x.Index)
+          const c = centricRows.filter((c) => c.Name === x.Name)[aIdx]
           const row = JSON.parse(JSON.stringify(x))
 
           if (c) {

@@ -114,7 +114,7 @@
       },
 
       transformArr(arr) {
-        const header = arr[0]
+        const header = arr[0].map((x) => x.replace(' ', '').toLowerCase())
 
         return arr.slice(1).map((row, idx) => {
           const obj = {
@@ -133,7 +133,7 @@
         const armouryRows = this.transformArr(armoury)
         const centricRows = this.transformArr(centric)
 
-        const header = armoury[0]
+        const header = armoury[0].map((x) => x.replace(' ', '').toLowerCase())
         const tableRows = []
 
         armouryRows.forEach((x) => {
@@ -145,6 +145,9 @@
           if (c) {
             header.forEach((h) => {
               if (x[h] !== c[h]) {
+                console.log(aIdx)
+                console.log(c)
+                console.log(x[h], c[h])
                 row.yellow = row.yellow || []
                 row.yellow.push(h)
               }

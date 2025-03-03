@@ -89,7 +89,7 @@
                         requestAnimationFrame(processFrame);
                     };
 
-                    processFrame();
+                    video.value.onloadedmetadata = () => processFrame();
                 };
 
                 const captureImage = () => {

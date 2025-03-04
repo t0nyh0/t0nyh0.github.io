@@ -54,7 +54,7 @@
             setup() {
                 const video = ref(null);
                 const canvas = ref(null);
-                const orientation = ref(screen.orientation.type.split('-')[0])
+                const orientation = ref(screen.orientation.type.split('-')[0] || 'portrait')
                 const capabilities = ref(null);
                 const showCapabilities = ref(false);
                 const iso = ref(400);

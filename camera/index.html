@@ -62,7 +62,7 @@
                 console.log(orientation.value)
 
                 onMounted(async () => {
-                    screen.orientation.addEventListener("change", () => {)
+                    screen.orientation.addEventListener("change", () => {
                         if (screen.orientation.type.includes('landscape')) {
                             orientation.value = 'landscape';
                         } else {

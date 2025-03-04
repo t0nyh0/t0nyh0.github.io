@@ -83,7 +83,7 @@
                     video.value.srcObject = mediaStream;
 
                     track = mediaStream.getVideoTracks()[0];
-                    track.applyConstraints({iso: 900})
+                    track.applyConstraints({iso: iso.value})
 
                     const tc = track.getCapabilities()
 

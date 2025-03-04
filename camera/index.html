@@ -64,12 +64,7 @@
 
                 onMounted(async () => {
                     screen.orientation.addEventListener("change", () => {
-                        if (screen.orientation.type.includes('landscape')) {
-                            orientation.value = 'landscape';
-                        } else {
-                            orientation.value = 'portrait';
-                        }
-
+                        onOrientationChange()
                         onLoadStream()
                     })
 
@@ -90,6 +85,14 @@
                     capabilities.value = Object.keys(tc).map((key) => {
                         return `<strong>${key}</strong><br/>${JSON.stringify(tc[key])}`
                     }, []).join("<br/><br/>")
+                }
+
+                const onOrientationChange = () => {
+                    if (screen.orientation.type.includes('landscape')) {
+                        orientation.value = 'landscape';
+                    } else {
+                        orientation.value = 'portrait';
+                    }
                 }
 
                 const captureImage = () => {

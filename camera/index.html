@@ -78,6 +78,7 @@
                 });
 
                 const onLoadStream = async () => {
+                    console.log({ video: { facingMode: "environment", aspectRatio: orientation.value === 'landscape' ? 16/9 : 9/16, iso: iso.value } })
                     const mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", aspectRatio: orientation.value === 'landscape' ? 16/9 : 9/16, iso: iso.value } })
                     video.value.srcObject = mediaStream;
 

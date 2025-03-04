@@ -48,7 +48,10 @@
             <h1 class="text-lg font-bold mb-4">Camera Capabilities</h1>
 
             <p class="text-xs text-pretty">
-                <p v-for="capability in capabilities"><strong>{{capability.key}}</strong>: {{JSON.stringify(capability)}}</p>
+                <p v-for="capability in capabilities" class="my-1">
+                    <strong>{{capability.key}}:</strong>
+                    {{prettyPrintCapability(capability)}}
+                </p>
             </p>
 
             <button @click="showCapabilities = false" class="absolute top-4 right-4 ">
@@ -82,7 +85,7 @@
                 });
 
                 const onLoadStream = async () => {
-                    const mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", aspectRatio: orientation.value === 'landscape' ? 16/9 : 9/16, iso: iso.value } })
+                    const mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", aspectRatio: orientation.value === 'landscape' ? 16/9 : 9/16, iso: iso.value, zoom: 0.5, resizeMode: 'crop-and-scale' } })
                     video.value.srcObject = mediaStream;
 
                     track = mediaStream.getVideoTracks()[0];
@@ -127,7 +130,11 @@
                     onLoadStream()
                 }
 
-                return { video, canvas, captureImage, orientation, capabilities, showCapabilities, iso, changeIso, tools };
+                const prettyPrintCapability = (capability) => {
+                    return Object.keys(capability).filter((key) => key !== 'key').map(key => `${key}=${capability[key]}`).join(', ')
+                }
+
+                return { video, canvas, captureImage, orientation, capabilities, showCapabilities, iso, changeIso, tools, prettyPrintCapability };
             }
         }).mount('#app');
     </script>

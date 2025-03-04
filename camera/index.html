@@ -49,6 +49,7 @@
 
     <script>
         const { createApp, ref, onMounted } = Vue;
+        let track = null
 
         createApp({
             setup() {
@@ -80,7 +81,7 @@
                     const mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", aspectRatio: orientation.value === 'landscape' ? 16/9 : 9/16, iso: iso.value } })
                     video.value.srcObject = mediaStream;
 
-                    const track = mediaStream.getVideoTracks()[0];
+                    track = mediaStream.getVideoTracks()[0];
                     track.applyConstraints({iso: 900})
 
                     const tc = track.getCapabilities()

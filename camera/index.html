@@ -54,13 +54,15 @@
             setup() {
                 const video = ref(null);
                 const canvas = ref(null);
-                const orientation = ref(screen.orientation.type.split('-')[0] || 'portrait')
+                const orientation = ref()
                 const capabilities = ref(null);
                 const showCapabilities = ref(false);
                 const iso = ref(400);
 
+                console.log(orientation.value)
+
                 onMounted(async () => {
-                    screen.orientation.addEventListener("change", () => {
+                    screen.orientation.addEventListener("change", () => {)
                         if (screen.orientation.type.includes('landscape')) {
                             orientation.value = 'landscape';
                         } else {
@@ -70,6 +72,7 @@
                         onLoadStream()
                     })
 
+                    orientation.value = screen.orientation.type.split('-')[0] || 'portrait'
                     onLoadStream()
                 });
 

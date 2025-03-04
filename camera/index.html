@@ -7,10 +7,18 @@
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <style>
+        .monitor {
+            object-fit: cover;
+            width: 100vw;
+            height: 100vh;
+            border: 0;
+        }
+    </style>
 </head>
 <body class="font-sans bg-black touch-none">
     <div id="app" class="fixed inset-0">
-        <video ref="video" autoplay playsinline class="h-screen w-full border-0 m-0"></video>
+        <video class="monitor" ref="video" autoplay playsinline></video>
         <div class="absolute inset-0 opacity-50">
             <div class="absolute top-1/3 w-full h-px bg-white"></div>
             <div class="absolute top-2/3 w-full h-px bg-white"></div>
@@ -55,12 +63,10 @@
             setup() {
                 const video = ref(null);
                 const canvas = ref(null);
-                const orientation = ref()
+                const orientation = ref('portrait')
                 const capabilities = ref(null);
                 const showCapabilities = ref(false);
                 const iso = ref(400);
-
-                console.log(orientation.value)
 
                 onMounted(async () => {
                     screen.orientation.addEventListener("change", () => {
@@ -73,7 +79,6 @@
                 });
 
                 const onLoadStream = async () => {
-                    console.log({ video: { facingMode: "environment", aspectRatio: orientation.value === 'landscape' ? 16/9 : 9/16, iso: iso.value } })
                     const mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", aspectRatio: orientation.value === 'landscape' ? 16/9 : 9/16, iso: iso.value } })
                     video.value.srcObject = mediaStream;
 

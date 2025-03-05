@@ -67,6 +67,8 @@
                     <strong>{{capability.key}}:</strong>
                     {{prettyPrintCapability(capability)}}
                 </p>
+
+                <p v-html="debugStr"></p>
             </p>
 
             <button @click="showCapabilities = false" class="absolute top-4 right-4 ">
@@ -89,6 +91,7 @@
                 const showCapabilities = ref(false);
                 const iso = ref(400);
                 const angle = ref(0);
+                const debugStr = ref(null);
 
                 onMounted(async () => {
                     screen.orientation.addEventListener("change", () => {
@@ -98,6 +101,7 @@
 
                     if (window.DeviceOrientationEvent) {
                         window.addEventListener("deviceorientation", (event) => {
+                            debugStr.value = `orientation data: ${JSON.stringify(event)}`
                             if (event.beta !== null) {
                                 angle.value = event.beta;
                             }
@@ -191,7 +195,7 @@
                     return Object.keys(capability).filter((key) => key !== 'key').map(key => `${key}=${capability[key]}`).join(', ')
                 }
 
-                return { video, canvas, captureImage, orientation, capabilities, showCapabilities, prettyPrintCapability, iso, changeIso, tools, angle };
+                return { video, canvas, captureImage, orientation, capabilities, showCapabilities, prettyPrintCapability, iso, changeIso, tools, angle,debugStr };
             }
         }).mount('#app');
     </script>

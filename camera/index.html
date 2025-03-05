@@ -14,6 +14,15 @@
             height: 100vh;
             border: 0;
         }
+        .angle-guide {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100px;
+            height: 2px;
+            background-color: red;
+            transform-origin: center;
+        }
     </style>
 </head>
 <body class="font-sans bg-black touch-none">
@@ -26,6 +35,12 @@
             <div class="absolute left-2/3 h-full w-px bg-white"></div>
         </div>
         <canvas ref="canvas" class="hidden"></canvas>
+
+        <div class="absolute top-4 left-1/2 transform -translate-x-1/2 bg-white px-4 py-2 rounded-md text-black text-sm font-bold">
+            Angle: {{ angle.toFixed(2) }}°
+        </div>
+
+        <div class="angle-guide" :style="{ transform: `translate(-50%, -50%) rotate(${angle}deg)` }"></div>
 
         <div class="flex items-center justify-center fixed"
             :class="[orientation === 'portrait' ? 'flex-row bottom-0 left-0 right-0 py-8' : 'flex-col top-0 right-0 bottom-0 px-8']">
@@ -62,45 +77,54 @@
 
     <script>
         const { createApp, ref, onMounted } = Vue;
-        let track = null
+        let track = null;
 
         createApp({
             setup() {
                 const video = ref(null);
                 const canvas = ref(null);
-                const orientation = ref('portrait')
+                const orientation = ref('portrait');
                 const capabilities = ref(null);
-                const tools = ref([])
+                const tools = ref([]);
                 const showCapabilities = ref(false);
                 const iso = ref(400);
+                const angle = ref(0);
 
                 onMounted(async () => {
                     screen.orientation.addEventListener("change", () => {
-                        onOrientationChange()
-                        onLoadStream()
-                    })
+                        onOrientationChange();
+                        onLoadStream();
+                    });
 
-                    orientation.value = screen.orientation.type.split('-')[0] || 'portrait'
-                    onLoadStream()
+                    if (window.DeviceOrientationEvent) {
+                        window.addEventListener("deviceorientation", (event) => {
+                            if (event.beta !== null) {
+                                angle.value = event.beta;
+                            }
+                        });
+                    }
+
+                    orientation.value = screen.orientation.type.split('-')[0] || 'portrait';
+                    onLoadStream();
                 });
 
                 const onLoadStream = async () => {
-                    const mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", aspectRatio: orientation.value === 'landscape' ? 16/9 : 9/16,  resizeMode: 'crop-and-scale' } })
+                    const mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", aspectRatio: orientation.value === 'landscape' ? 16/9 : 9/16,  resizeMode: 'crop-and-scale' } });
                     video.value.srcObject = mediaStream;
 
                     track = mediaStream.getVideoTracks()[0];
-                    track.applyConstraints({iso: iso.value, zoom: 0.5})
+                    track.applyConstraints({iso: iso.value, zoom: 0.5});
 
-                    const tc = track.getCapabilities()
+                    const tc = track.getCapabilities();
 
-                    const EXCLUDE_CAPABILITIES = ['deviceId', 'groupId']
+                    const EXCLUDE_CAPABILITIES = ['deviceId', 'groupId'];
                     capabilities.value = Object
                         .keys(tc)
                         .filter(key => !EXCLUDE_CAPABILITIES.includes(key))
                         .map((key) => Object.assign({}, { key }, tc[key]));
 
-                        tools.value = capabilities.value.map(capability => capability.key)
-                }
+                    tools.value = capabilities.value.map(capability => capability.key);
+                };
 
                 const onOrientationChange = () => {
                     if (screen.orientation.type.includes('landscape')) {
@@ -167,7 +191,7 @@
                     return Object.keys(capability).filter((key) => key !== 'key').map(key => `${key}=${capability[key]}`).join(', ')
                 }
 
-                return { video, canvas, captureImage, orientation, capabilities, showCapabilities, iso, changeIso, tools, prettyPrintCapability };
+                return { video, canvas, captureImage, orientation, capabilities, showCapabilities, prettyPrintCapability, iso, changeIso, tools, angle };
             }
         }).mount('#app');
     </script>

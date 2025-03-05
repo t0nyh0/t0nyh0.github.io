@@ -85,11 +85,11 @@
                 });
 
                 const onLoadStream = async () => {
-                    const mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", aspectRatio: orientation.value === 'landscape' ? 16/9 : 9/16, iso: iso.value, zoom: 0.5, resizeMode: 'crop-and-scale' } })
+                    const mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", aspectRatio: orientation.value === 'landscape' ? 16/9 : 9/16,  resizeMode: 'crop-and-scale' } })
                     video.value.srcObject = mediaStream;
 
                     track = mediaStream.getVideoTracks()[0];
-                    track.applyConstraints({iso: iso.value})
+                    track.applyConstraints({iso: iso.value, zoom: 0.5})
 
                     const tc = track.getCapabilities()
 
@@ -114,14 +114,47 @@
                     if (!video.value || !canvas.value) return;
 
                     const context = canvas.value.getContext('2d');
-                    canvas.value.width = video.value.videoWidth;
-                    canvas.value.height = video.value.videoHeight;
-                    context.drawImage(video.value, 0, 0, canvas.value.width, canvas.value.height);
 
-                    const imageData = canvas.value.toDataURL('image/png');
+                    // Get viewport size
+                    const viewportWidth = window.innerWidth;
+                    const viewportHeight = window.innerHeight;
+
+                    // Get video aspect ratio and dimensions
+                    const videoWidth = video.value.videoWidth;
+                    const videoHeight = video.value.videoHeight;
+                    const videoAspectRatio = videoWidth / videoHeight;
+                    const viewportAspectRatio = viewportWidth / viewportHeight;
+
+                    let cropWidth, cropHeight, startX, startY;
+
+                    if (videoAspectRatio > viewportAspectRatio) {
+                        cropHeight = videoHeight;
+                        cropWidth = videoHeight * viewportAspectRatio;
+                        startX = (videoWidth - cropWidth) / 2;
+                        startY = 0;
+                    } else {
+                        cropWidth = videoWidth;
+                        cropHeight = videoWidth / viewportAspectRatio;
+                        startX = 0;
+                        startY = (videoHeight - cropHeight) / 2;
+                    }
+
+                    // Set canvas size to match viewport
+                    canvas.value.width = viewportWidth;
+                    canvas.value.height = viewportHeight;
+
+                    // Draw the cropped video frame onto the canvas
+                    context.drawImage(
+                        video.value,
+                        startX, startY, cropWidth, cropHeight, // Source (video)
+                        0, 0, viewportWidth, viewportHeight    // Destination (canvas)
+                    );
+
+                    // Convert to image
+                    const imageData = canvas.value.toDataURL('image/jpg');
                     const a = document.createElement('a');
                     a.href = imageData;
-                    a.download = 'captured_image.png';
+                    a.download = `${new Date().getTime()}.jpg`;
                     a.click();
                 };
 

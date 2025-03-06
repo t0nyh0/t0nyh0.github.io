@@ -105,7 +105,7 @@
                 });
 
                 const onLoadStream = async () => {
-                    const mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", aspectRatio: orientation.value === 'landscape' ? 16/9 : 9/16,  resizeMode: 'crop-and-scale' } });
+                    const mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", aspectRatio: orientation.value === 'landscape' ? 16/9 : 9/16,  resizeMode: 'crop-and-scale', focusMode: 'continuous' } });
                     video.value.srcObject = mediaStream;
 
                     track = mediaStream.getVideoTracks()[0];
@@ -178,7 +178,7 @@
 
                 const changeIso = () => {
                     iso.value = iso.value < 800 ? iso.value + 100 : 100;
-                    track.applyConstraints({iso: iso.value, zoom: 0.5});
+                    track.applyConstraints({advanced:[{iso: iso.value}]});
                 }
 
                 const getTouchDistance = (touches) => {

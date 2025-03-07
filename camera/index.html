@@ -60,12 +60,14 @@
                 Angle: {{ angle.toFixed(2) }}°
             </div>
 
-            <div class="my-2 bg-opacity-50 bg-black z-10 p-4 rounded-lg" v-if="showFocus">
+            <div class="my-2 bg-opacity-50 bg-black z-10 p-4 rounded-lg text-left" v-if="showFocus">
+                <p class="float-right text-sm text-green-500">{{focusDistance}}</p>
                 <h1 class="text-sm font-bold mb-2 text-white">Focus Distance</h1>
                 <input type="range" v-model="focusDistance" :min="minFocusDistance" step="0.1" :max="maxFocusDistance" @change="applyConstraints($event, 'focusDistance', $event.target.value)" class="w-full" />
             </div>
 
-            <div class="my-2 bg-opacity-50 bg-black z-10 p-4 rounded-lg" v-if="showZoom">
+            <div class="my-2 bg-opacity-50 bg-black z-10 p-4 rounded-lg text-left" v-if="showZoom">
+                <p class="float-right text-sm text-green-500">{{zoom}}</p>
                 <h1 class="text-sm font-bold mb-2 text-white">Zoom</h1>
                 <input type="range" v-model="zoom" :min="minZoom" step="0.1" :max="maxZoom" class="w-full" @change="applyConstraints($event, 'zoom', $event.target.value)" />
             </div>

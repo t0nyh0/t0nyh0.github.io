@@ -98,6 +98,8 @@
                 let lastTouchDistance = null;
 
                 onMounted(async () => {
+                    if (DeviceMotionEvent?.requestPermission) await DeviceMotionEvent.requestPermission()
+
                     screen.orientation.addEventListener("change", () => {
                         onOrientationChange();
                         onLoadStream();
@@ -201,19 +203,8 @@
                     track.applyConstraints({advanced:[{iso: iso.value}]});
                 }
 
-                const getTouchDistance = (touches) => {
-                    const dx = touches[0].pageX - touches[1].pageX;
-                    const dy = touches[0].pageY - touches[1].pageY;
-                    const dist = Math.hypot(dx, dy) / 2;
-
-                    return dist;
-                };
-
                 const updateZoom = () => {
-                    if (track) {
-                        track.applyConstraints({ advanced: [{ zoom: zoom.value }] });
-                        console.log('updating')
-                    }
+                    if (track) track.applyConstraints({ advanced: [{ zoom: zoom.value }] });
                 };
 
                 const onTouchStart = (event) => {
@@ -223,13 +214,22 @@
                     }
                 };
 
+
+                const getTouchDistance = (touches) => {
+                    const dx = touches[0].pageX - touches[1].pageX;
+                    const dy = touches[0].pageY - touches[1].pageY;
+                    const dist = Math.hypot(dx, dy) / 2;
+
+                    return dist;
+                };
+
                 const onTouchMove = (event) => {
                     if (event.touches.length === 2) {
                         event.preventDefault();
                         const newDistance = getTouchDistance(event.touches);
                         const zoomChange = newDistance / lastTouchDistance;
 
-                        console.log(zoomChange)
+                        console.log(newDistance, lastTouchDistance, zoomChange)
                         zoom.value = Math.max(capabilities.value['zoom']?.min, Math.min(zoom.value * zoomChange, capabilities.value['zoom']?.max));
                         lastTouchDistance = newDistance;
                         updateZoom();

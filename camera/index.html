@@ -187,7 +187,10 @@
                     return Math.hypot(dx, dy) / 2;
                 };
                 const updateZoom = () => {
-                    if (track) track.applyConstraints({ advanced: [{ zoom: zoom.value }] });
+                    if (track) {
+                        track.applyConstraints({ advanced: [{ zoom: zoom.value }] });
+                        console.log('updating')
+                    }
                     animationFrameId = requestAnimationFrame(updateZoom);
                 };
 

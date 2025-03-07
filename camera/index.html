@@ -27,7 +27,7 @@
         </div>
         <canvas ref="canvas" class="hidden"></canvas>
 
-        <div class="absolute top-4 left-1/2 transform -translate-x-1/2 bg-white px-4 py-2 rounded-md text-black text-sm font-bold">
+        <div class="absolute top-4 left-1/2 transform -translate-x-1/2 bg-white px-4 py-2 rounded-md text-black text-sm font-bold" v-if="tools.includes('angle')">
             Angle: {{ angle.toFixed(2) }}°
         </div>
 
@@ -130,6 +130,8 @@
                         .map((key) => Object.assign({}, { key }, tc[key]));
 
                     tools.value = capabilities.value.map(capability => capability.key);
+
+                    if (window.DeviceOrientationEvent) tools.push('angle');
 
                     if (capabilities['focusDistance']) {
                         minFocusDistance.value = capabilities['focusDistance'].min;

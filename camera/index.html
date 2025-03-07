@@ -51,7 +51,7 @@
             </div>
         </div>
 
-        <div class="absolute top-20 left-8 right-8 bg-opacity-50 bg-black z-10 p-4 rounded-lg" v-if="showFocus">
+        <div class="absolute left-8 right-8 bg-opacity-50 bg-black z-10 p-4 rounded-lg" v-if="showFocus" :class="[tools.includes('angle') ? 'top-20' : 'top-8']">
             <h1 class="text-sm font-bold mb-2 text-white">Focus Distance</h1>
             <input type="range" v-model="focusDistance" :min="minFocusDistance" step="0.1" :max="maxFocusDistance" @change="onUpdateFocus" class="w-full" />
         </div>

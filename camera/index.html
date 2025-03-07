@@ -184,20 +184,16 @@
                 const getTouchDistance = (touches) => {
                     const dx = touches[0].pageX - touches[1].pageX;
                     const dy = touches[0].pageY - touches[1].pageY;
-                    return Math.hypot(dx, dy);
+                    return Math.hypot(dx, dy) / 2;
                 };
                 const updateZoom = () => {
-                    if (track) {
-                        console.log('updating')
-                        track.applyConstraints({ advanced: [{ zoom: zoom.value }] });
-                    }
+                    if (track) track.applyConstraints({ advanced: [{ zoom: zoom.value }] });
                     animationFrameId = requestAnimationFrame(updateZoom);
                 };
 
                 const onTouchStart = (event) => {
                     if (event.touches.length === 2) {
                         lastTouchDistance = getTouchDistance(event.touches);
-                        updateZoom();
                     }
                 };
 
@@ -208,6 +204,7 @@
                         const zoomChange = newDistance / lastTouchDistance;
                         zoom.value = Math.max(1, Math.min(zoom.value * zoomChange, 3));
                         lastTouchDistance = newDistance;
+                        updateZoom();
                     }
                 };
 

@@ -260,6 +260,8 @@
                     else if (dimension === 'iso') iso.value = val;
                     else if (dimension === 'focusDistance') focusDistance.value = val;
 
+                    if (dimension) console.log(`apply: ${dimension}=${val}`)
+
                     track?.applyConstraints({ advanced: [{ iso: Number(iso.value), zoom: Number(zoom.value), focusDistance: Number(focusDistance.value) }] });
                 }
 

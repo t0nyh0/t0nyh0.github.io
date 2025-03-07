@@ -27,19 +27,12 @@
         </div>
         <canvas ref="canvas" class="hidden"></canvas>
 
-        <div class="absolute top-4 left-1/2 transform -translate-x-1/2 bg-white px-4 py-2 rounded-md text-black text-sm font-bold" v-if="tools.includes('angle')">
-            Angle: {{ angle.toFixed(2) }}°
-        </div>
-
         <div class="flex items-center justify-center fixed"
             :class="[orientation === 'portrait' ? 'flex-row bottom-0 left-0 right-0 py-8' : 'flex-col top-0 right-0 bottom-0 px-8']">
             <div class="flex-1 justify-center flex m-2" :class="[orientation === 'portrait' ? 'flex-row' : 'flex-col']">
-                <div class="px-2 py-1 rounded-md bg-white font-semibold text-sm opacity-80 mx-2 touch-manipulation" @click="changeIso" v-if="tools.includes('iso')">{{iso}}</div>
-                <div class="px-2 py-1 text-lg font-semibold text-white mx-2 touch-manipulation" @click="onRequestDeviceOrientation">
+                <div class="px-2 py-1 rounded-md bg-white font-semibold text-sm opacity-80 mx-2 touch-manipulation text-xl" @click="changeIso" v-if="tools.includes('iso')">{{iso}}</div>
+                <div class="px-2 py-1 text-xl font-semibold text-white mx-2 touch-manipulation" @click="onRequestDeviceOrientation">
                     <i class="fa-solid fa-compass"></i>
-                </div>
-                <div class="px-2 py-1 text-lg font-semibold text-white mx-2 touch-manipulation" @click="showFocus = !showFocus" v-if="tools.includes('focusDistance')">
-                    <i class="fa-solid fa-users-viewfinder"></i>
                 </div>
             </div>
             <div
@@ -49,14 +42,30 @@
                     <div class="w-12 h-12 bg-white rounded-full"></div>
                 </button>
             </div>
-            <div class="flex-1 justify-center flex m-2 " :class="[orientation === 'portrait' ? 'flex-row' : 'flex-col']" @click="showCapabilities = true">
-                <i class="fa fa-circle-info text-white opacity-80 text-2xl"></i>
+            <div class="flex-1 justify-center flex m-2" :class="[orientation === 'portrait' ? 'flex-row' : 'flex-col']">
+                <div class="px-2 py-1 text-xl font-semibold text-white mx-2 touch-manipulation" @click="showZoom = !showZoom" v-if="tools.includes('zoom')">
+                    <i class="fa-solid fa-search"></i>
+                </div>
+                <div class="px-2 py-1 text-xl font-semibold text-white mx-2 touch-manipulation" :class="[orientation === 'portrait' ? 'flex-row' : 'flex-col']" @click="showCapabilities = true">
+                    <i class="fa fa-circle-info text-white opacity-80"></i>
+                </div>
             </div>
         </div>
 
-        <div class="absolute left-8 right-8 bg-opacity-50 bg-black z-10 p-4 rounded-lg" v-if="showFocus" :class="[tools.includes('angle') ? 'top-20' : 'top-8']">
-            <h1 class="text-sm font-bold mb-2 text-white">Focus Distance</h1>
-            <input type="range" v-model="focusDistance" :min="minFocusDistance" step="0.1" :max="maxFocusDistance" @change="onUpdateFocus" class="w-full" />
+        <div class="aboslute top-4 flex-col items-center" v-if="tools.includes('angle') || tools.includes('zoom') || tools.includes('focusDistance')">
+            <div class="my-2 bg-white px-4 py-2 rounded-md text-black text-sm font-bold" v-if="tools.includes('angle')">
+                Angle: {{ angle.toFixed(2) }}°
+            </div>
+
+            <div class="my-2 bg-opacity-50 bg-black z-10 p-4 rounded-lg" v-if="showFocus">
+                <h1 class="text-sm font-bold mb-2 text-white">Focus Distance</h1>
+                <input type="range" v-model="focusDistance" :min="minFocusDistance" step="0.1" :max="maxFocusDistance" @change="applyConstraints" class="w-full" />
+            </div>
+
+            <div class="my-2 bg-opacity-50 bg-black z-10 p-4 rounded-lg" v-if="showZoom">
+                <h1 class="text-sm font-bold mb-2 text-white">Zoom</h1>
+                <input type="range" v-model="zoom" :min="minZoom" step="0.1" :max="maxZoom" @change="applyConstraints" class="w-full" />
+            </div>
         </div>
 
         <div class="fixed inset-0 bg-blue-400 bg-opacity-100 z-10 p-6" v-if="showCapabilities">
@@ -93,10 +102,16 @@
                 const minFocusDistance = ref(0);
                 const maxFocusDistance = ref(5);
                 const focusDistance = ref(0);
+
+                const showZoom = ref(false);
+                const minZoom = ref(0);
+                const maxZoom = ref(5);
+                const zoom = ref(null);
+
                 const iso = ref(400);
                 const angle = ref(0);
                 const debugStr = ref(null);
-                const zoom = ref(null);
+
                 let lastTouchDistance = null;
                 const hypotScreen = Math.hypot(window.screen.width, window.screen.height);
 
@@ -134,12 +149,17 @@
                         .map((key) => Object.assign({}, { key }, tc[key]));
 
                     tools.value = capabilities.value.map(capability => capability.key);
-                    zoom.value = capabilities['zoom']?.min ?? 0.5;
 
                     if (capabilities.value['focusDistance']) {
                         minFocusDistance.value = capabilities['focusDistance'].min;
                         maxFocusDistance.value = capabilities['focusDistance'].max ?? 5;
                         focusDistance.value = capabilities['focusDistance'].min;
+                    }
+
+                    if (capabilities.value['zoom']) {
+                        minZoom.value = capabilities['zoom'].min;
+                        maxZoom.value = capabilities['zoom'].max ?? 5;
+                        zoom.value = capabilities['zoom']?.min ?? 0.5;
                     }
 
                     console.log(capabilities.value)
@@ -230,12 +250,6 @@
                     lastTouchDistance = null;
                 };
 
-                onUpdateFocus = (e) => {
-                    console.log('focus', e.target.value)
-                    focusDistance.value = Number(e.target.value);
-                    applyContraints()
-                }
-
                 const prettyPrintCapability = (capability) => {
                     return Object.keys(capability).filter((key) => key !== 'key').map(key => `${key}=${capability[key]}`).join(', ')
                 }
@@ -251,7 +265,33 @@
                     requestAnimationFrame(applyContraints);
                 });
 
-                return { video, canvas, captureImage, orientation, capabilities, showCapabilities, prettyPrintCapability, iso, onRequestDeviceOrientation, changeIso, tools, angle,debugStr, onTouchMove, onTouchEnd, minFocusDistance, focusDistance, showFocus, onUpdateFocus, maxFocusDistance };
+                return {
+                    video,
+                    canvas,
+                    captureImage,
+                    orientation,
+                    capabilities,
+                    showCapabilities,
+                    prettyPrintCapability,
+                    iso,
+                    onRequestDeviceOrientation,
+                    changeIso,
+                    tools,
+                    angle,
+                    debugStr,
+                    onTouchMove,
+                    onTouchEnd,
+
+                    showFocus,
+                    minFocusDistance,
+                    maxFocusDistance,
+                    focusDistance,
+
+                    showZoom,
+                    minZoom,
+                    maxZoom,
+                    zoom
+                };
             }
         }).mount('#app');
     </script>

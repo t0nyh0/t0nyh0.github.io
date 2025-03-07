@@ -67,7 +67,7 @@
 
             <div class="my-2 bg-opacity-50 bg-black z-10 p-4 rounded-lg" v-if="showZoom">
                 <h1 class="text-sm font-bold mb-2 text-white">Zoom</h1>
-                <input type="range" v-model="zoom" :min="minZoom" step="0.1" :max="maxZoom" class="w-full" @change="applyConstraints('focusDistance', $event.target.value)" />
+                <input type="range" v-model="zoom" :min="minZoom" step="0.1" :max="maxZoom" class="w-full" @change="applyConstraints('zoom', $event.target.value)" />
             </div>
         </div>
 

@@ -249,7 +249,7 @@
                     return Object.keys(capability).filter((key) => key !== 'key').map(key => `${key}=${capability[key]}`).join(', ')
                 }
 
-                return { video, canvas, captureImage, orientation, capabilities, showCapabilities, prettyPrintCapability, iso, changeIso, tools, angle,debugStr, onTouchStart, onTouchMove, onTouchEnd, minFocusDistance, focusDistance, showFocus, onUpdateFocus };
+                return { video, canvas, captureImage, orientation, capabilities, showCapabilities, prettyPrintCapability, iso, changeIso, tools, angle,debugStr, onTouchStart, onTouchMove, onTouchEnd, minFocusDistance, focusDistance, showFocus, onUpdateFocus, maxFocusDistance };
             }
         }).mount('#app');
     </script>

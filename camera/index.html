@@ -131,7 +131,7 @@
 
                     tools.value = capabilities.value.map(capability => capability.key);
 
-                    if (window.DeviceOrientationEvent) tools.push('angle');
+                    if (window.DeviceOrientationEvent) tools.value.push('angle');
 
                     if (capabilities['focusDistance']) {
                         minFocusDistance.value = capabilities['focusDistance'].min;
@@ -204,7 +204,9 @@
                 const getTouchDistance = (touches) => {
                     const dx = touches[0].pageX - touches[1].pageX;
                     const dy = touches[0].pageY - touches[1].pageY;
-                    return Math.hypot(dx, dy) / 2;
+                    const dist = Math.hypot(dx, dy) / 2;
+
+                    return dist;
                 };
 
                 const updateZoom = () => {
@@ -226,7 +228,9 @@
                         event.preventDefault();
                         const newDistance = getTouchDistance(event.touches);
                         const zoomChange = newDistance / lastTouchDistance;
-                        zoom.value = Math.max(1, Math.min(zoom.value * zoomChange, 3));
+
+                        console.log(zoomChange)
+                        zoom.value = Math.max(capabilities.value['zoom']?.min, Math.min(zoom.value * zoomChange, capabilities.value['zoom']?.max));
                         lastTouchDistance = newDistance;
                         updateZoom();
                     }

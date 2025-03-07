@@ -52,8 +52,8 @@
             </div>
         </div>
 
-        <div class="aboslute top-4 flex-col items-center" v-if="tools.includes('angle') || tools.includes('zoom') || tools.includes('focusDistance')">
-            <div class="my-2 bg-white px-4 py-2 rounded-md text-black text-sm font-bold" v-if="tools.includes('angle')">
+        <div class="absolute top-4 left-12 right-12 flex-col items-center z-10 text-center" v-if="tools.includes('angle') || tools.includes('zoom') || tools.includes('focusDistance')">
+            <div class="my-2 bg-white px-4 py-2 rounded-md text-black text-sm font-bold inline-block align-center" v-if="tools.includes('angle')">
                 Angle: {{ angle.toFixed(2) }}°
             </div>
 
@@ -162,9 +162,7 @@
                         zoom.value = capabilities['zoom']?.min ?? 0.5;
                     }
 
-                    console.log(capabilities.value)
-
-                    applyContraints()
+                    applyConstraints()
                 };
 
                 const onOrientationChange = () => {
@@ -225,7 +223,7 @@
 
                 const changeIso = () => {
                     iso.value = iso.value < 800 ? iso.value + 100 : 100;
-                    applyContraints()
+                    applyConstraints()
                 }
 
                 const onTouchMove = (event) => {
@@ -242,7 +240,7 @@
                         lastZoom = zoom.value;
 
                         zoom.value = Math.min(Math.max(minZoom, zoom.value * pctOfScreen), maxZoom);
-                        applyContraints()
+                        applyConstraints()
                     }
                 };
 
@@ -255,14 +253,14 @@
                 }
 
 
-                const applyContraints = () => {
+                const applyConstraints = () => {
                     track?.applyConstraints({ advanced: [{ iso: iso.value, zoom: zoom.value, focusDistance: focusDistance.value }] });
                 }
 
                 onMounted(async () => {
                     orientation.value = screen.orientation.type.split('-')[0] || 'portrait';
                     onLoadStream();
-                    requestAnimationFrame(applyContraints);
+                    requestAnimationFrame(applyConstraints);
                 });
 
                 return {
@@ -290,7 +288,9 @@
                     showZoom,
                     minZoom,
                     maxZoom,
-                    zoom
+                    zoom,
+
+                    applyConstraints
                 };
             }
         }).mount('#app');

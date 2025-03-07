@@ -34,8 +34,8 @@
         <div class="flex items-center justify-center fixed"
             :class="[orientation === 'portrait' ? 'flex-row bottom-0 left-0 right-0 py-8' : 'flex-col top-0 right-0 bottom-0 px-8']">
             <div class="flex-1 justify-center flex m-2" :class="[orientation === 'portrait' ? 'flex-row' : 'flex-col']">
-                <div class="px-2 py-1 rounded-md bg-white font-semibold text-sm opacity-80" @click="changeIso" v-if="tools.includes('iso')">{{iso}}</div>
-                <div class="px-2 py-1 rounded-md bg-white font-semibold text-sm opacity-80" @click="toggleFocus" v-if="tools.includes('focusDistance')">
+                <div class="px-2 py-1 rounded-md bg-white font-semibold text-sm opacity-80 mx-2" @click="changeIso" v-if="tools.includes('iso')">{{iso}}</div>
+                <div class="px-2 py-1 text-lg font-semibold text-white mx-2" @click="showFocus = !showFocus" v-if="tools.includes('focusDistance')">
                     <i class="fa-solid fa-users-viewfinder"></i>
                 </div>
             </div>
@@ -49,6 +49,11 @@
             <div class="flex-1 justify-center flex m-2 " :class="[orientation === 'portrait' ? 'flex-row' : 'flex-col']" @click="showCapabilities = true">
                 <i class="fa fa-circle-info text-white opacity-80 text-2xl"></i>
             </div>
+        </div>
+
+        <div class="absolute top-20 left-8 right-8 bg-opacity-50 bg-black z-10 p-4 rounded-lg" v-if="showFocus">
+            <h1 class="text-sm font-bold mb-2 text-white">Focus Distance</h1>
+            <input type="range" v-model="focusDistance" :min="minFocusDistance" step="0.1" :max="maxFocusDistance" @change="onUpdateFocus" class="w-full" />
         </div>
 
         <div class="fixed inset-0 bg-blue-400 bg-opacity-100 z-10 p-6" v-if="showCapabilities">
@@ -82,6 +87,10 @@
                 const capabilities = ref(null);
                 const tools = ref([]);
                 const showCapabilities = ref(false);
+                const showFocus = ref(false);
+                const minFocusDistance = ref(0);
+                const maxFocusDistance = ref(1);
+                const focusDistance = ref(0);
                 const iso = ref(400);
                 const angle = ref(0);
                 const debugStr = ref(null);
@@ -121,6 +130,12 @@
                         .map((key) => Object.assign({}, { key }, tc[key]));
 
                     tools.value = capabilities.value.map(capability => capability.key);
+
+                    if (capabilities['focusDistance']) {
+                        minFocusDistance.value = capabilities['focusDistance'].min;
+                        maxFocusDistance.value = capabilities['focusDistance'].max ?? 2;
+                        focusDistance.value = capabilities['focusDistance'].min;
+                    }
                 };
 
                 const onOrientationChange = () => {
@@ -189,6 +204,7 @@
                     const dy = touches[0].pageY - touches[1].pageY;
                     return Math.hypot(dx, dy) / 2;
                 };
+
                 const updateZoom = () => {
                     if (track) {
                         track.applyConstraints({ advanced: [{ zoom: zoom.value }] });
@@ -219,12 +235,19 @@
                     cancelAnimationFrame(animationFrameId);
                 };
 
+                onUpdateFocus = (e) => {
+                    if (track) {
+                        focusDistance.value = e.target.value;
+                        console.log(focusDistance.value)
+                        track.applyConstraints({ advanced: [{ focusDistance: focusDistance.value }] });
+                    }
+                }
 
                 const prettyPrintCapability = (capability) => {
                     return Object.keys(capability).filter((key) => key !== 'key').map(key => `${key}=${capability[key]}`).join(', ')
                 }
 
-                return { video, canvas, captureImage, orientation, capabilities, showCapabilities, prettyPrintCapability, iso, changeIso, tools, angle,debugStr, onTouchStart, onTouchMove, onTouchEnd };
+                return { video, canvas, captureImage, orientation, capabilities, showCapabilities, prettyPrintCapability, iso, changeIso, tools, angle,debugStr, onTouchStart, onTouchMove, onTouchEnd, minFocusDistance, focusDistance, showFocus, onUpdateFocus };
             }
         }).mount('#app');
     </script>

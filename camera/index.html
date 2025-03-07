@@ -91,7 +91,7 @@
                 const showCapabilities = ref(false);
                 const showFocus = ref(false);
                 const minFocusDistance = ref(0);
-                const maxFocusDistance = ref(1);
+                const maxFocusDistance = ref(5);
                 const focusDistance = ref(0);
                 const iso = ref(400);
                 const angle = ref(0);
@@ -136,11 +136,13 @@
                     tools.value = capabilities.value.map(capability => capability.key);
                     zoom.value = capabilities['zoom']?.min ?? 0.5;
 
-                    if (capabilities['focusDistance']) {
+                    if (capabilities.value['focusDistance']) {
                         minFocusDistance.value = capabilities['focusDistance'].min;
-                        maxFocusDistance.value = capabilities['focusDistance'].max ?? 2;
+                        maxFocusDistance.value = capabilities['focusDistance'].max ?? 5;
                         focusDistance.value = capabilities['focusDistance'].min;
                     }
+
+                    console.log(capabilities.value)
 
                     applyContraints()
                 };
@@ -217,7 +219,9 @@
 
                         const minZoom = capabilities['zoom']?.min ?? 0.5;
                         const maxZoom = capabilities['zoom']?.max ?? 1;
-                        zoom.value = minZoom + (maxZoom - minZoom) * pctOfScreen;
+                        lastZoom = zoom.value;
+
+                        zoom.value = Math.min(Math.max(minZoom, zoom.value * pctOfScreen), maxZoom);
                         applyContraints()
                     }
                 };
@@ -227,11 +231,9 @@
                 };
 
                 onUpdateFocus = (e) => {
-                    if (track) {
-                        console.log('focus', e.target.value)
-                        focusDistance.value = Number(e.target.value);
-                        applyContraints()
-                    }
+                    console.log('focus', e.target.value)
+                    focusDistance.value = Number(e.target.value);
+                    applyContraints()
                 }
 
                 const prettyPrintCapability = (capability) => {

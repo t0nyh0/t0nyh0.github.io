@@ -62,12 +62,12 @@
 
             <div class="my-2 bg-opacity-50 bg-black z-10 p-4 rounded-lg" v-if="showFocus">
                 <h1 class="text-sm font-bold mb-2 text-white">Focus Distance</h1>
-                <input type="range" v-model="focusDistance" :min="minFocusDistance" step="0.1" :max="maxFocusDistance" @change="applyConstraints('focusDistance', $event.target.value)" class="w-full" />
+                <input type="range" v-model="focusDistance" :min="minFocusDistance" step="0.1" :max="maxFocusDistance" @change="applyConstraints($event, 'focusDistance', $event.target.value)" class="w-full" />
             </div>
 
             <div class="my-2 bg-opacity-50 bg-black z-10 p-4 rounded-lg" v-if="showZoom">
                 <h1 class="text-sm font-bold mb-2 text-white">Zoom</h1>
-                <input type="range" v-model="zoom" :min="minZoom" step="0.1" :max="maxZoom" class="w-full" @change="applyConstraints('zoom', $event.target.value)" />
+                <input type="range" v-model="zoom" :min="minZoom" step="0.1" :max="maxZoom" class="w-full" @change="applyConstraints($event, 'zoom', $event.target.value)" />
             </div>
         </div>
 
@@ -255,7 +255,7 @@
                     return Object.keys(capability).filter((key) => key !== 'key').map(key => `${key}=${capability[key]}`).join(', ')
                 }
 
-                const applyConstraints = (dimension, val) => {
+                const applyConstraints = (event, dimension, val) => {
                     if (dimension === 'zoom') zoom.value = val;
                     else if (dimension === 'iso') iso.value = val;
                     else if (dimension === 'focusDistance') focusDistance.value = val;

@@ -139,13 +139,20 @@
                         .map((key) => Object.assign({}, { key }, tc[key]));
 
                     tools.value = capabilities.value.map(capability => capability.key);
+                    zoom.value = capabilities['zoom']?.min ?? 0.5;
 
                     if (capabilities['focusDistance']) {
                         minFocusDistance.value = capabilities['focusDistance'].min;
                         maxFocusDistance.value = capabilities['focusDistance'].max ?? 2;
                         focusDistance.value = capabilities['focusDistance'].min;
                     }
+
+                    applyContraints()
                 };
+
+                const applyContraints = () => {
+                    track.applyConstraints({ advanced: [{ iso: iso.value, zoom: zoom.value, focusDistance: focusDistance.value }] });
+                }
 
                 const onOrientationChange = () => {
                     if (screen.orientation.type.includes('landscape')) {
@@ -205,11 +212,11 @@
 
                 const changeIso = () => {
                     iso.value = iso.value < 800 ? iso.value + 100 : 100;
-                    track.applyConstraints({advanced:[{iso: iso.value}]});
+                    applyContraints()
                 }
 
                 const updateZoom = () => {
-                    if (track) track.applyConstraints({ advanced: [{ zoom: zoom.value }] });
+                    applyContraints()
                 };
 
                 const onTouchStart = (event) => {
@@ -231,9 +238,7 @@
                     if (event.touches.length === 2) {
                         event.preventDefault();
                         const newDistance = getTouchDistance(event.touches);
-                        const zoomChange = newDistance / lastTouchDistance;
-
-                        console.log(newDistance, lastTouchDistance, zoomChange)
+                        const zoomChange = (newDistance - lastTouchDistance) / lastTouchDistance
                         zoom.value = Math.max(capabilities.value['zoom']?.min, Math.min(zoom.value * zoomChange, capabilities.value['zoom']?.max));
                         lastTouchDistance = newDistance;
                         updateZoom();
@@ -248,8 +253,7 @@
                 onUpdateFocus = (e) => {
                     if (track) {
                         focusDistance.value = e.target.value;
-                        console.log(focusDistance.value)
-                        track.applyConstraints({ advanced: [{ focusDistance: focusDistance.value }] });
+                        applyContraints()
                     }
                 }
 

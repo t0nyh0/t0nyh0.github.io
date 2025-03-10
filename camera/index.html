@@ -167,16 +167,19 @@
                     const focusDistanceCapabilities  = capabilities.value.find(capability => capability.key === 'focusDistance');
                     if (focusDistanceCapabilities['focusDistance']) {
                         minFocusDistance.value = focusDistanceCapabilities.min;
-                        maxFocusDistance.value = focusDistanceCapabilities.max;
+                        maxFocusDistance.value = focusDistanceCapabilities.max ?? 3;
                         focusDistance.value = focusDistanceCapabilities.min;
                     }
 
                     const zoomCapabilities  = capabilities.value.find(capability => capability.key === 'zoom');
                     if (zoomCapabilities) {
                         minZoom.value = zoomCapabilities.min;
-                        maxZoom.value = zoomCapabilities.max;
+                        maxZoom.value = zoomCapabilities.max ?? 3;
                         zoom.value = zoomCapabilities.min;
                     }
+
+                    console.log('focus', focusDistanceCapabilities)
+                    console.log('zoom', zoomCapabilities)
 
                     console.log(`focusDistance: min=${minFocusDistance.value}, max=${maxFocusDistance.value}, value=${focusDistance.value}`)
                     console.log(`zoom: min=${minZoom.value}, max=${maxZoom.value}, value=${zoom.value}`)

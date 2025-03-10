@@ -165,7 +165,7 @@
                     tools.value = capabilities.value.map(capability => capability.key);
 
                     const focusDistanceCapabilities  = capabilities.value.find(capability => capability.key === 'focusDistance');
-                    if (focusDistanceCapabilities['focusDistance']) {
+                    if (focusDistanceCapabilities) {
                         minFocusDistance.value = focusDistanceCapabilities.min;
                         maxFocusDistance.value = focusDistanceCapabilities.max ?? 3;
                         focusDistance.value = focusDistanceCapabilities.min;

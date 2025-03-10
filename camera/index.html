@@ -257,8 +257,7 @@
                     const touches = event.touches;
 
                     if (touches.length === 2) {
-                        const dist = Math.hypot(touches[0].pageX - touches[1].pageX, touches[0].pageY - touches[1].pageY);
-                        const pctOfScreen = dist / hypotScreen
+                        const pctOfScreen = Math.sqrt(Math.hypot(touches[0].pageX - touches[1].pageX, touches[0].pageY - touches[1].pageY) / hypotScreen)
                         const newZoom = zoom.value * (pctOfScreen / startZoomPctScreen);
 
                         console.log(`pinch: old=${zoom.value}, new=${newZoom}`)

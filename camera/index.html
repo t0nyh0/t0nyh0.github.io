@@ -164,6 +164,7 @@
 
                     tools.value = capabilities.value.map(capability => capability.key);
 
+                    console.log(capabilities.value)
                     if (capabilities.value['focusDistance']) {
                         console.log(capabilities.value['focusDistance'])
                         minFocusDistance.value = capabilities.value['focusDistance'].min;

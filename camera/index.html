@@ -117,7 +117,7 @@
                 const angle = ref(0);
                 const debugStr = ref(null);
 
-                let startTouchDistance = null;
+                let startZoomPctScreen = null;
                 const hypotScreen = Math.hypot(window.screen.width, window.screen.height);
 
                 onRequestDeviceOrientation = async () => {
@@ -248,7 +248,7 @@
                 const onTouchStart = (event) => {
                     const touches = event.touches;
                     if (touches.length === 2) {
-                        startTouchDistance = Math.hypot(touches[0].pageX - touches[1].pageX, touches[0].pageY - touches[1].pageY);;
+                        startZoomPctScreen = Math.hypot(touches[0].pageX - touches[1].pageX, touches[0].pageY - touches[1].pageY) / hypotScreen;
                     }
                 }
 
@@ -258,10 +258,9 @@
 
                     if (touches.length === 2) {
                         const dist = Math.hypot(touches[0].pageX - touches[1].pageX, touches[0].pageY - touches[1].pageY);
-                        const diff = dist - startTouchDistance
-                        const pctOfScreen = diff / hypotScreen
-                        const zoomDiff = zoom.value*pctOfScreen
-                        const newZoom = Math.min(Math.max(minZoom.value, zoom.value + zoomDiff), maxZoom.value);
+                        const pctOfScreen = dist / pctOfScreen
+                        const zoomDiff = zoom.value * (pctOfScreen / startZoomPctScreen);
+                        const newZoom = Math.min(Math.max(minZoom.value, zoom.value*zoomDiff), maxZoom.value);
                         console.log(zoom.value, zoomDiff, newZoom)
 
                         zoom.value = newZoom
@@ -270,7 +269,7 @@
                 };
 
                 const onTouchEnd = () => {
-                    startTouchDistance = null;
+                    startZoomPctScreen = null;
                 };
 
                 const prettyPrintCapability = (capability) => {

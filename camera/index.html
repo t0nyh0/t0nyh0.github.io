@@ -261,7 +261,7 @@
                         const pctOfScreen = dist / hypotScreen
                         const newZoom = zoom.value * (pctOfScreen / startZoomPctScreen);
 
-                        console.log(zoom.value, zoomDiff, newZoom)
+                        console.log(`pinch: old=${zoom.value}, new=${newZoom}`)
 
                         zoom.value = Math.min(Math.max(minZoom.value, newZoom), maxZoom.value);
                         applyConstraints()

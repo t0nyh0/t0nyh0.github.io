@@ -146,6 +146,8 @@
                         aspectRatio: orientation.value === 'landscape' ? 16/9 : 9/16,
                         resizeMode: 'crop-and-scale',
                         focusMode: 'continuous',
+                        width : { ideal: window.innerWidth },
+                        height : { ideal: window.innerHeight },
                         advanced: [{ iso: Number(iso.value), zoom: Number(zoom.value), focusDistance: Number(focusDistance.value) }]
                     } });
 

@@ -165,12 +165,14 @@
                     tools.value = capabilities.value.map(capability => capability.key);
 
                     if (capabilities.value['focusDistance']) {
+                        console.log(capabilities.value['focusDistance'])
                         minFocusDistance.value = capabilities.value['focusDistance'].min;
                         maxFocusDistance.value = capabilities.value['focusDistance'].max ?? 5;
                         focusDistance.value = capabilities.value['focusDistance'].min;
                     }
 
                     if (capabilities.value['zoom']) {
+                        console.log(capabilities.value['zoom'])
                         minZoom.value = capabilities.value['zoom']?.min;
                         maxZoom.value = capabilities.value['zoom']?.max ?? 5;
                         zoom.value = capabilities.value['zoom']?.min ?? 0.5;

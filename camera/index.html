@@ -171,10 +171,13 @@
                     }
 
                     if (capabilities.value['zoom']) {
-                        minZoom.value = capabilities.value['zoom'].min;
-                        maxZoom.value = capabilities.value['zoom'].max ?? 5;
+                        minZoom.value = capabilities.value['zoom']?.min;
+                        maxZoom.value = capabilities.value['zoom']?.max ?? 5;
                         zoom.value = capabilities.value['zoom']?.min ?? 0.5;
                     }
+
+                    console.log(`focusDistance: min=${minFocusDistance.value}, max=${maxFocusDistance.value}, value=${focusDistance.value}`)
+                    console.log(`zoom: min=${minZoom.value}, max=${maxZoom.value}, value=${zoom.value}`)
 
                     applyConstraints()
                 };

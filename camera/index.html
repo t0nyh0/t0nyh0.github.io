@@ -117,7 +117,7 @@
                 const angle = ref(0);
                 const debugStr = ref(null);
 
-                let lastTouchDistance = null;
+                let startTouchDistance = null;
                 const hypotScreen = Math.hypot(window.screen.width, window.screen.height);
 
                 onRequestDeviceOrientation = async () => {
@@ -177,9 +177,6 @@
                         maxZoom.value = zoomCapabilities.max ?? 3;
                         zoom.value = zoomCapabilities.min;
                     }
-
-                    console.log('focus', focusDistanceCapabilities)
-                    console.log('zoom', zoomCapabilities)
 
                     console.log(`focusDistance: min=${minFocusDistance.value}, max=${maxFocusDistance.value}, value=${focusDistance.value}`)
                     console.log(`zoom: min=${minZoom.value}, max=${maxZoom.value}, value=${zoom.value}`)
@@ -248,26 +245,29 @@
                     applyConstraints()
                 }
 
+                const onTouchStart = (event) => {
+                    const touches = event.touches;
+                    if (touches.length === 2) {
+                        startTouchDistance = Math.hypot(touches[0].pageX - touches[1].pageX, touches[0].pageY - touches[1].pageY);;
+                    }
+                }
+
                 const onTouchMove = (event) => {
-                    if (event.touches.length === 2) {
-                        event.preventDefault();
-                        const touches = event.touches;
+                    event.preventDefault();
+                    const touches = event.touches;
+
+                    if (touches.length === 2) {
                         const dist = Math.hypot(touches[0].pageX - touches[1].pageX, touches[0].pageY - touches[1].pageY);
-                        lastTouchDistance = dist;
-                        const diff = dist - lastTouchDistance
-                        const pctOfScreen = dist / hypotScreen;
+                        const diff = dist - startTouchDistance
+                        const pctOfScreen = diff / hypotScreen
 
-                        const minZoom = capabilities['zoom']?.min ?? 0.5;
-                        const maxZoom = capabilities['zoom']?.max ?? 1;
-                        lastZoom = zoom.value;
-
-                        zoom.value = Math.min(Math.max(minZoom, zoom.value * pctOfScreen), maxZoom);
+                        zoom.value = Math.min(Math.max(minZoom.value, zoom.value * pctOfScreen), maxZoom.value);
                         applyConstraints()
                     }
                 };
 
                 const onTouchEnd = () => {
-                    lastTouchDistance = null;
+                    startTouchDistance = null;
                 };
 
                 const prettyPrintCapability = (capability) => {

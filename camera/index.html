@@ -263,7 +263,7 @@
                         console.log(`pinch: old=${zoom.value}, new=${newZoom}`)
 
                         zoom.value = Math.min(Math.max(minZoom.value, newZoom), maxZoom.value);
-                        applyConstraints()
+                        applyConstraints(undefined, 'zoom', zoom.value);
                     }
                 };
 

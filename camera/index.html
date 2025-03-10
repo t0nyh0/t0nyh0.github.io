@@ -260,10 +260,11 @@
                         const dist = Math.hypot(touches[0].pageX - touches[1].pageX, touches[0].pageY - touches[1].pageY);
                         const diff = dist - startTouchDistance
                         const pctOfScreen = diff / hypotScreen
+                        const zoomDiff = zoom.value*pctOfScreen
 
-                        console.log(zoom.value, pctOfScreen, minZoom.value, maxZoom.value)
+                        console.log(zoom.value, pctOfScreen, zoomDiff)
 
-                        zoom.value = Math.min(Math.max(minZoom.value, zoom.value * pctOfScreen), maxZoom.value);
+                        zoom.value = Math.min(Math.max(minZoom.value, zoom.value + zoomDiff), maxZoom.value);
                         applyConstraints()
                     }
                 };

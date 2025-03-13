@@ -28,9 +28,8 @@
         <canvas ref="canvas" class="hidden"></canvas>
 
         <div class="flex items-center justify-center fixed"
-            :class="[orientation === 'portrait' ? 'flex-row bottom-0 left-0 right-0 py-8' : 'flex-col top-0 right-0 bottom-0 px-8']">
-            <div class="flex-1 justify-center flex m-2" :class="[orientation === 'portrait' ? 'flex-row' : 'flex-col']">
-                <div class="px-2 py-1 rounded-md bg-white font-semibold text-sm opacity-80 mx-2 touch-manipulation text-xl" @click="changeIso" v-if="tools.includes('iso')">{{iso}}</div>
+            :class="['flex-col top-0 right-0 bottom-0 px-8']">
+            <div class="flex-1 justify-center flex m-2" :class="['flex-col']">
                 <div class="px-2 py-1 text-xl font-semibold text-white mx-2 touch-manipulation" @click="onRequestDeviceOrientation">
                     <i class="fa-solid fa-compass"></i>
                 </div>
@@ -39,17 +38,17 @@
                 </div>
             </div>
             <div
-                :class="[orientation === 'portrait' ? 'mx-8' : 'my-8']"
+                :class="['my-8']"
             >
                 <button @click="captureImage" class="w-16 h-16 bg-white border-4 border-gray-300 rounded-full relative flex items-center justify-center">
                     <div class="w-12 h-12 bg-white rounded-full"></div>
                 </button>
             </div>
-            <div class="flex-1 justify-center flex m-2" :class="[orientation === 'portrait' ? 'flex-row' : 'flex-col']">
+            <div class="flex-1 justify-center flex m-2" :class="['flex-col']">
                 <div class="px-2 py-1 text-xl font-semibold text-white mx-2 touch-manipulation" @click="showZoom = !showZoom" v-if="tools.includes('zoom')">
                     <i class="fa-solid fa-search"></i>
                 </div>
-                <div class="px-2 py-1 text-xl font-semibold text-white mx-2 touch-manipulation" :class="[orientation === 'portrait' ? 'flex-row' : 'flex-col']" @click="showCapabilities = true">
+                <div class="px-2 py-1 text-xl font-semibold text-white mx-2 touch-manipulation" :class="['flex-col']" @click="showCapabilities = true">
                     <i class="fa fa-circle-info text-white opacity-80"></i>
                 </div>
             </div>
@@ -94,12 +93,12 @@
     <script>
         const { createApp, ref, onMounted } = Vue;
         let track = null;
+        screen.orientation.lock('landscape-primary');
 
         createApp({
             setup() {
                 const video = ref(null);
                 const canvas = ref(null);
-                const orientation = ref('portrait');
                 const capabilities = ref(null);
                 const tools = ref([]);
                 const showCapabilities = ref(false);
@@ -113,7 +112,6 @@
                 const maxZoom = ref(5);
                 const zoom = ref(0.5);
 
-                const iso = ref(400);
                 const angle = ref(0);
                 const debugStr = ref(null);
 
@@ -132,23 +130,18 @@
                         });
                     }
 
-                    screen.orientation.addEventListener("change", () => {
-                        onOrientationChange();
-                        onLoadStream();
-                    });
-
                     tools.value.push('angle');
                 }
 
                 const onLoadStream = async () => {
                     const mediaStream = await navigator.mediaDevices.getUserMedia({ video: {
                         facingMode: "environment",
-                        aspectRatio: orientation.value === 'landscape' ? 16/9 : 9/16,
+                        aspectRatio: 16/9,
                         resizeMode: 'crop-and-scale',
                         focusMode: 'continuous',
                         width : { ideal: window.innerWidth },
                         height : { ideal: window.innerHeight },
-                        advanced: [{ iso: Number(iso.value), zoom: Number(zoom.value), focusDistance: Number(focusDistance.value) }]
+                        advanced: [{ zoom: Number(zoom.value), focusDistance: Number(focusDistance.value) }]
                     } });
 
                     video.value.srcObject = mediaStream;
@@ -184,14 +177,6 @@
                     applyConstraints()
                 };
 
-                const onOrientationChange = () => {
-                    if (screen.orientation.type.includes('landscape')) {
-                        orientation.value = 'landscape';
-                    } else {
-                        orientation.value = 'portrait';
-                    }
-                }
-
                 const captureImage = () => {
                     if (!video.value || !canvas.value) return;
 
@@ -201,7 +186,7 @@
                     const viewportWidth = window.innerWidth;
                     const viewportHeight = window.innerHeight;
 
-                    // Get video aspect ratio and dimensions
+                    // Get video dimensions from the camera stream
                     const videoWidth = video.value.videoWidth;
                     const videoHeight = video.value.videoHeight;
                     const videoAspectRatio = videoWidth / videoHeight;
@@ -222,28 +207,23 @@
                     }
 
                     // Set canvas size to match viewport
-                    canvas.value.width = viewportWidth;
-                    canvas.value.height = viewportHeight;
+                    canvas.value.width = cropWidth;
+                    canvas.value.height = cropHeight;
 
                     // Draw the cropped video frame onto the canvas
                     context.drawImage(
                         video.value,
                         startX, startY, cropWidth, cropHeight, // Source (video)
-                        0, 0, viewportWidth, viewportHeight    // Destination (canvas)
+                        0, 0, cropWidth, cropHeight    // Destination (canvas)
                     );
 
-                    // Convert to image
-                    const imageData = canvas.value.toDataURL('image/jpg');
+                    // Convert to high-quality image
+                    const imageData = canvas.value.toDataURL('image/jpeg', 1.0); // High quality JPEG
                     const a = document.createElement('a');
                     a.href = imageData;
                     a.download = `${new Date().getTime()}.jpg`;
                     a.click();
                 };
-
-                const changeIso = () => {
-                    iso.value = iso.value < 800 ? iso.value + 100 : 100;
-                    applyConstraints()
-                }
 
                 const onTouchStart = (event) => {
                     const touches = event.touches;
@@ -277,16 +257,14 @@
 
                 const applyConstraints = (event, dimension, val) => {
                     if (dimension === 'zoom') zoom.value = val;
-                    else if (dimension === 'iso') iso.value = val;
                     else if (dimension === 'focusDistance') focusDistance.value = val;
 
                     if (dimension) console.log(`apply: ${dimension}=${val}`)
 
-                    track?.applyConstraints({ advanced: [{ iso: Number(iso.value), zoom: Number(zoom.value), focusDistance: Number(focusDistance.value) }] });
+                    track?.applyConstraints({ advanced: [{ zoom: Number(zoom.value), focusDistance: Number(focusDistance.value) }] });
                 }
 
                 onMounted(async () => {
-                    orientation.value = screen.orientation.type.split('-')[0] || 'portrait';
                     onLoadStream();
                 });
 
@@ -294,13 +272,10 @@
                     video,
                     canvas,
                     captureImage,
-                    orientation,
                     capabilities,
                     showCapabilities,
                     prettyPrintCapability,
-                    iso,
                     onRequestDeviceOrientation,
-                    changeIso,
                     tools,
                     angle,
                     debugStr,

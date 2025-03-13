@@ -1,0 +1,6 @@
+{
+  "name": "SmartShoot Camera",
+  "short_name": "SSCamera",
+  "start_url": "/index.html",
+  "display": "standalone"
+}

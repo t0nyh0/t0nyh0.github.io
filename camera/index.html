@@ -93,7 +93,7 @@
     <script>
         const { createApp, ref, onMounted } = Vue;
         let track = null;
-        screen.orientation.lock('landscape-primary');
+        if (screen?.orientation?.lock) screen.orientation.lock('landscape-primary');
 
         createApp({
             setup() {

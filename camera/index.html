@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimal-ui">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
     <title>SmartShoot Super Camera</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -64,7 +64,7 @@
                 {{ angle.toFixed(2) }}°
             </div>
             <div v-else>
-                <i class="fa fa-compass text-2xl" @click="onRequestPermissions()"></i>
+                <i class="fa fa-compass text-2xl" @click="onRequestPermissions(true)"></i>
             </div>
         </div>
 
@@ -336,8 +336,8 @@
                     }
                 }
 
-                const onRequestPermissions = async () => {
-                    if (DeviceMotionEvent?.requestPermission) await DeviceMotionEvent.requestPermission()
+                const onRequestPermissions = async (request) => {
+                    if (request && DeviceMotionEvent?.requestPermission) await DeviceMotionEvent.requestPermission()
                     tools.value.push('angle');
                     window.addEventListener("deviceorientation", (event) => {
                         if (event.beta !== null) angle.value = event.beta;

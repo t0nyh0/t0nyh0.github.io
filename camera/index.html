@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimal-ui">
     <title>SmartShoot Super Camera</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -15,6 +15,9 @@
             height: 100vh;
             border: 0;
         }
+
+        html{position: relative; height: 100%; overflow: hidden;}
+
 
         .hole {
             position: fixed;
@@ -58,7 +61,7 @@
 
         <div class="fixed bottom-4 right-4 text-white font-black m-2 z-8">
             <div v-if="tools.includes('angle') && angle" :class="{'text-red-500': !isValidAngle}">
-            {{ angle.toFixed(2) }}°
+                {{ angle.toFixed(2) }}°
             </div>
             <div v-else @click="onRequestPermissions">
                 <i class="fa fa-compass text-2xl"></i>

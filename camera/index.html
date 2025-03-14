@@ -15,41 +15,57 @@
             height: 100vh;
             border: 0;
         }
+
+        .hole {
+            position: fixed;
+            box-shadow: 0 0 0 99999px rgba(0, 0, 0, .7);
+        }
+
+        .hole.error {
+            box-shadow: 0 0 0 99999px rgba(255, 0, 0, .7);
+        }
     </style>
 </head>
 <body class="font-sans bg-black touch-none">
     <div id="app" class="fixed inset-0">
         <video class="monitor" ref="video" autoplay playsinline></video>
-        <div class="absolute inset-0 opacity-50" @touchstart="onTouchStart" @touchmove="onTouchMove" @touchend="onTouchEnd">
-            <div class="absolute top-1/3 w-full h-px bg-white"></div>
-            <div class="absolute top-2/3 w-full h-px bg-white"></div>
-            <div class="absolute left-1/3 h-full w-px bg-white"></div>
-            <div class="absolute left-2/3 h-full w-px bg-white"></div>
-        </div>
         <canvas ref="canvas" class="hidden"></canvas>
 
+        <div class="hole" :style="maskMargins" :class="{'error': !isValidMask}">
+            <div class="absolute inset-0 opacity-50" @touchstart="onTouchStart" @touchmove="onTouchMove" @touchend="onTouchEnd">
+                <div class="absolute top-1/3 w-full h-px bg-white"></div>
+                <div class="absolute top-2/3 w-full h-px bg-white"></div>
+                <div class="absolute left-1/3 h-full w-px bg-white"></div>
+                <div class="absolute left-2/3 h-full w-px bg-white"></div>
+            </div>
+        </div>
 
-        <div class="flex fixed bottom-4 left-4">
+        <div class="flex flex-col fixed bottom-4 left-4 z-8">
+            <div class="p-1 text-2xl font-semibold text-white mx-2 touch-manipulation" :class="['flex-col']" @click="showCapabilities = true">
+                <i class="fa fa-circle-info"></i>
+            </div>
             <div class="p-1 text-2xl font-semibold text-white mx-2 touch-manipulation" @click="showFocus = !showFocus" v-if="tools.includes('focusDistance')">
                 <i class="fa-solid fa-users-rectangle"></i>
             </div>
             <div class="p-1 text-2xl font-semibold text-white mx-2 touch-manipulation" @click="showZoom = !showZoom" v-if="tools.includes('zoom')">
                 <i class="fa-solid fa-search"></i>
             </div>
-            <div class="p-1 text-2xl font-semibold text-white mx-2 touch-manipulation" :class="['flex-col']" @click="showCapabilities = true">
-                <i class="fa fa-circle-info text-white opacity-80"></i>
+
+            <div class="p-1 m-2 text-white font-black touch-manipulation" @click="onToggleMask()">
+                {{ maskAspectRatio}}
             </div>
         </div>
 
-        <div class="fixed bottom-4 right-4 text-white text-sm font-black" v-if="tools.includes('angle')">
+        <div class="fixed bottom-4 right-4 text-white font-black m-2 z-8" v-if="tools.includes('angle') && angle" :class="{'text-red-500': !isValidAngle}">
             {{ angle.toFixed(2) }}°
         </div>
 
-        <div class="flex items-center justify-center fixed flex-col top-0 right-0 bottom-0 px-8">
+        <div class="flex items-center justify-center fixed flex-col top-0 right-5 bottom-0">
             <button @click="captureImage" class="w-16 h-16 bg-white border-4 border-gray-300 rounded-full relative flex items-center justify-center">
                 <div class="w-12 h-12 bg-white rounded-full"></div>
             </button>
         </div>
+
 
         <div class="absolute top-4 left-12 right-12 flex-col items-center z-10 text-center" v-if="tools.includes('angle') || tools.includes('zoom') || tools.includes('focusDistance')">
             <div class="my-2 bg-opacity-50 bg-black z-10 p-4 rounded-lg text-left" v-if="showFocus">
@@ -84,7 +100,7 @@
     </div>
 
     <script>
-        const { createApp, ref, onMounted } = Vue;
+        const { createApp, computed, ref, onMounted } = Vue;
         let track = null;
         if (screen?.orientation?.lock) screen.orientation.lock('landscape-primary');
 
@@ -99,17 +115,59 @@
                 const minFocusDistance = ref(0.12);
                 const maxFocusDistance = ref(5);
                 const focusDistance = ref(0.12);
+                const maskAspectRatio = ref("4/3");
 
                 const showZoom = ref(false);
                 const minZoom = ref(0.5);
                 const maxZoom = ref(5);
                 const zoom = ref(0.5);
 
-                const angle = ref(0);
+                const angle = ref(null);
                 const debugStr = ref(null);
 
                 let startZoomPctScreen = 1;
                 const hypotScreen = Math.hypot(window.screen.width, window.screen.height);
+
+                const maskMargins = computed(() => {
+                    const maskAspectRatioStr = maskAspectRatio.value.split('/').map(Number);
+                    const maskAspectRatioNum = maskAspectRatioStr[0] / maskAspectRatioStr[1];
+
+                    const viewportWidth = window.innerWidth;
+                    const viewportHeight = window.innerHeight;
+                    const viewportAspectRatio = viewportWidth / viewportHeight;
+
+                    let horizontalMargin = 0;
+                    let verticalMargin = 0;
+
+                    if (viewportAspectRatio > maskAspectRatioNum) {
+                        // Viewport is wider than mask aspect ratio
+                        const maskHeight = viewportHeight * 0.7; // 15% margin on top and bottom
+                        const maskWidth = maskHeight * maskAspectRatioNum;
+                        horizontalMargin = (viewportWidth - maskWidth) / 2;
+                        verticalMargin = viewportHeight * 0.15; // 15% margin
+                    } else {
+                        // Viewport is taller than mask aspect ratio
+                        const maskWidth = viewportWidth * 0.7; // 15% margin on left and right
+                        const maskHeight = maskWidth / maskAspectRatioNum;
+                        horizontalMargin = viewportWidth * 0.15; // 15% margin
+                        verticalMargin = (viewportHeight - maskHeight) / 2;
+                    }
+
+                    return {
+                        top: `${verticalMargin}px`,
+                        bottom: `${verticalMargin}px`,
+                        left: `${horizontalMargin}px`,
+                        right: `${horizontalMargin}px`
+                    };
+                });
+
+                const isValidAngle = computed(() => {
+                    return !angle.value || (angle.value < 55 && angle.value > 55);
+                });
+
+                const isValidMask = computed(() => {
+                    return isValidAngle.value;
+                });
 
                 const onLoadStream = async () => {
                     const mediaStream = await navigator.mediaDevices.getUserMedia({ video: {
@@ -199,15 +257,22 @@
                         startY = (videoHeight - cropHeight) / 2;
                     }
 
-                    // Set canvas size to match viewport
-                    canvas.value.width = cropWidth;
-                    canvas.value.height = cropHeight;
+                    // Adjust crop dimensions based on maskMargins
+                    const maskMarginsValue = maskMargins.value;
+                    const adjustedCropWidth = cropWidth * (1 - 2 * parseFloat(maskMarginsValue.left) / viewportWidth);
+                    const adjustedCropHeight = cropHeight * (1 - 2 * parseFloat(maskMarginsValue.top) / viewportHeight);
+                    const adjustedStartX = startX + cropWidth * parseFloat(maskMarginsValue.left) / viewportWidth;
+                    const adjustedStartY = startY + cropHeight * parseFloat(maskMarginsValue.top) / viewportHeight;
+
+                    // Set canvas size to match adjusted crop dimensions
+                    canvas.value.width = adjustedCropWidth;
+                    canvas.value.height = adjustedCropHeight;
 
                     // Draw the cropped video frame onto the canvas
                     context.drawImage(
                         video.value,
-                        startX, startY, cropWidth, cropHeight, // Source (video)
-                        0, 0, cropWidth, cropHeight    // Destination (canvas)
+                        adjustedStartX, adjustedStartY, adjustedCropWidth, adjustedCropHeight, // Source (video)
+                        0, 0, adjustedCropWidth, adjustedCropHeight    // Destination (canvas)
                     );
 
                     // Convert to high-quality image
@@ -262,6 +327,10 @@
                     onLoadStream();
                 });
 
+                onToggleMask = () => {
+                    maskAspectRatio.value = maskAspectRatio.value === "4/3" ? "16/9" : "4/3";
+                }
+
                 return {
                     video,
                     canvas,
@@ -285,6 +354,13 @@
                     minZoom,
                     maxZoom,
                     zoom,
+
+                    maskMargins,
+                    maskAspectRatio,
+                    onToggleMask,
+
+                    isValidAngle,
+                    isValidMask,
 
                     applyConstraints
                 };

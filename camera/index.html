@@ -213,12 +213,7 @@
                         zoom.value = zoomCapabilities.min;
                     }
 
-                    if (!DeviceMotionEvent?.requestPermission) tools.value.push('angle');
-
-                    window.addEventListener("deviceorientation", (event) => {
-                        debugStr.value = `orientation data: ${JSON.stringify(event)}`
-                        if (event.beta !== null) angle.value = event.beta;
-                    });
+                    onRequestPermissions();
 
                     console.log(`focusDistance: min=${minFocusDistance.value}, max=${maxFocusDistance.value}, value=${focusDistance.value}`)
                     console.log(`zoom: min=${minZoom.value}, max=${maxZoom.value}, value=${zoom.value}`)
@@ -326,14 +321,29 @@
                 });
 
                 const onToggleMask = () => {
-                    maskAspectRatio.value = maskAspectRatio.value === "4/3" ? "16/9" : "4/3";
+                    switch (maskAspectRatio.value) {
+                        case "4/3":
+                            maskAspectRatio.value = "5/4";
+                            break;
+                        case "5/4":
+                            maskAspectRatio.value = "16/9";
+                            break;
+                        case "16/9":
+                            maskAspectRatio.value = "4/3";
+                            break;
+                        default:
+                            maskAspectRatio.value = "4/3";
+                    }
                 }
 
                 const onRequestPermissions = async () => {
-                    if (DeviceMotionEvent?.requestPermission) {
-                        const response = await DeviceMotionEvent.requestPermission()
-                        hasAngle = response === 'granted'
-                    }
+                    let hasAngle = false;
+                    if (DeviceMotionEvent?.requestPermission) await DeviceMotionEvent.requestPermission()
+                    else tools.value.push('angle');
+
+                    window.addEventListener("deviceorientation", (event) => {
+                        if (event.beta !== null) angle.value = event.beta;
+                    });
                 }
 
                 return {

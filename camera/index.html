@@ -41,13 +41,13 @@
         </div>
 
         <div class="flex flex-col fixed bottom-4 left-4 z-8">
-            <div class="p-1 text-2xl font-semibold text-white mx-2 touch-manipulation" :class="['flex-col']" @click="showCapabilities = true">
+            <div class="p-1 text-xl font-semibold text-white m-2 touch-manipulation" :class="['flex-col']" @click="showCapabilities = true">
                 <i class="fa fa-circle-info"></i>
             </div>
-            <div class="p-1 text-2xl font-semibold text-white mx-2 touch-manipulation" @click="showFocus = !showFocus" v-if="tools.includes('focusDistance')">
+            <div class="p-1 text-xl font-semibold text-white m-2 touch-manipulation" @click="showFocus = !showFocus" v-if="tools.includes('focusDistance')">
                 <i class="fa-solid fa-users-rectangle"></i>
             </div>
-            <div class="p-1 text-2xl font-semibold text-white mx-2 touch-manipulation" @click="showZoom = !showZoom" v-if="tools.includes('zoom')">
+            <div class="p-1 text-xl font-semibold text-white m-2 touch-manipulation" @click="showZoom = !showZoom" v-if="tools.includes('zoom')">
                 <i class="fa-solid fa-search"></i>
             </div>
 

@@ -63,8 +63,8 @@
             <div v-if="tools.includes('angle') && angle" :class="{'text-red-500': !isValidAngle}">
                 {{ angle.toFixed(2) }}°
             </div>
-            <div v-else @click="onRequestPermissions">
-                <i class="fa fa-compass text-2xl"></i>
+            <div v-else>
+                <i class="fa fa-compass text-2xl" @click="onRequestPermissions()"></i>
             </div>
         </div>
 
@@ -337,10 +337,8 @@
                 }
 
                 const onRequestPermissions = async () => {
-                    let hasAngle = false;
                     if (DeviceMotionEvent?.requestPermission) await DeviceMotionEvent.requestPermission()
-                    else tools.value.push('angle');
-
+                    tools.value.push('angle');
                     window.addEventListener("deviceorientation", (event) => {
                         if (event.beta !== null) angle.value = event.beta;
                     });

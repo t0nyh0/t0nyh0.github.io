@@ -209,6 +209,7 @@
                         let hasAngle = true
                         if (DeviceMotionEvent?.requestPermission) {
                             const response = await DeviceMotionEvent.requestPermission()
+                            console.log(response)
                             hasAngle = response === 'granted'
                         }
 
@@ -216,9 +217,7 @@
 
                         window.addEventListener("deviceorientation", (event) => {
                             debugStr.value = `orientation data: ${JSON.stringify(event)}`
-                            if (event.beta !== null) {
-                                angle.value = event.beta;
-                            }
+                            if (event.beta !== null) angle.value = event.beta;
                         });
                     }
 

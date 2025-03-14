@@ -28,38 +28,30 @@
         </div>
         <canvas ref="canvas" class="hidden"></canvas>
 
-        <div class="flex items-center justify-center fixed"
-            :class="['flex-col top-0 right-0 bottom-0 px-8']">
-            <div class="flex-1 justify-center flex m-2" :class="['flex-col']">
-                <div class="px-2 py-1 text-xl font-semibold text-white mx-2 touch-manipulation" @click="onRequestDeviceOrientation">
-                    <i class="fa-solid fa-compass"></i>
-                </div>
-                <div class="px-2 py-1 text-xl font-semibold text-white mx-2 touch-manipulation" @click="showFocus = !showFocus" v-if="tools.includes('focusDistance')">
-                    <i class="fa-solid fa-users-rectangle"></i>
-                </div>
+
+        <div class="flex fixed bottom-4 left-4">
+            <div class="p-1 text-2xl font-semibold text-white mx-2 touch-manipulation" @click="showFocus = !showFocus" v-if="tools.includes('focusDistance')">
+                <i class="fa-solid fa-users-rectangle"></i>
             </div>
-            <div
-                :class="['my-8']"
-            >
-                <button @click="captureImage" class="w-16 h-16 bg-white border-4 border-gray-300 rounded-full relative flex items-center justify-center">
-                    <div class="w-12 h-12 bg-white rounded-full"></div>
-                </button>
+            <div class="p-1 text-2xl font-semibold text-white mx-2 touch-manipulation" @click="showZoom = !showZoom" v-if="tools.includes('zoom')">
+                <i class="fa-solid fa-search"></i>
             </div>
-            <div class="flex-1 justify-center flex m-2" :class="['flex-col']">
-                <div class="px-2 py-1 text-xl font-semibold text-white mx-2 touch-manipulation" @click="showZoom = !showZoom" v-if="tools.includes('zoom')">
-                    <i class="fa-solid fa-search"></i>
-                </div>
-                <div class="px-2 py-1 text-xl font-semibold text-white mx-2 touch-manipulation" :class="['flex-col']" @click="showCapabilities = true">
-                    <i class="fa fa-circle-info text-white opacity-80"></i>
-                </div>
+            <div class="p-1 text-2xl font-semibold text-white mx-2 touch-manipulation" :class="['flex-col']" @click="showCapabilities = true">
+                <i class="fa fa-circle-info text-white opacity-80"></i>
             </div>
         </div>
 
-        <div class="absolute top-4 left-12 right-12 flex-col items-center z-10 text-center" v-if="tools.includes('angle') || tools.includes('zoom') || tools.includes('focusDistance')">
-            <div class="my-2 bg-white px-3 py-2 rounded-md text-black text-sm font-bold inline-block align-center" v-if="tools.includes('angle')">
-                Angle: {{ angle.toFixed(2) }}°
-            </div>
+        <div class="fixed bottom-4 right-4 text-white text-sm font-black" v-if="tools.includes('angle')">
+            {{ angle.toFixed(2) }}°
+        </div>
 
+        <div class="flex items-center justify-center fixed flex-col top-0 right-0 bottom-0 px-8">
+            <button @click="captureImage" class="w-16 h-16 bg-white border-4 border-gray-300 rounded-full relative flex items-center justify-center">
+                <div class="w-12 h-12 bg-white rounded-full"></div>
+            </button>
+        </div>
+
+        <div class="absolute top-4 left-12 right-12 flex-col items-center z-10 text-center" v-if="tools.includes('angle') || tools.includes('zoom') || tools.includes('focusDistance')">
             <div class="my-2 bg-opacity-50 bg-black z-10 p-4 rounded-lg text-left" v-if="showFocus">
                 <p class="float-right text-sm text-green-500">{{focusDistance}}</p>
                 <h1 class="text-sm font-bold mb-2 text-white">Focus Distance</h1>
@@ -119,21 +111,6 @@
                 let startZoomPctScreen = 1;
                 const hypotScreen = Math.hypot(window.screen.width, window.screen.height);
 
-                onRequestDeviceOrientation = async () => {
-                    if (DeviceMotionEvent?.requestPermission) await DeviceMotionEvent.requestPermission()
-
-                    if (window.DeviceOrientationEvent) {
-                        window.addEventListener("deviceorientation", (event) => {
-                            debugStr.value = `orientation data: ${JSON.stringify(event)}`
-                            if (event.beta !== null) {
-                                angle.value = event.beta;
-                            }
-                        });
-                    }
-
-                    tools.value.push('angle');
-                }
-
                 const onLoadStream = async () => {
                     const mediaStream = await navigator.mediaDevices.getUserMedia({ video: {
                         facingMode: "environment",
@@ -168,6 +145,23 @@
                         minZoom.value = zoomCapabilities.min;
                         maxZoom.value = zoomCapabilities.max ?? 3;
                         zoom.value = zoomCapabilities.min;
+                    }
+
+                    if (window.DeviceOrientationEvent) {
+                        let hasAngle = true
+                        if (DeviceMotionEvent?.requestPermission) {
+                            const response = await DeviceMotionEvent.requestPermission()
+                            hasAngle = response === 'granted'
+                        }
+
+                        if (hasAngle) tools.value.push('angle');
+
+                        window.addEventListener("deviceorientation", (event) => {
+                            debugStr.value = `orientation data: ${JSON.stringify(event)}`
+                            if (event.beta !== null) {
+                                angle.value = event.beta;
+                            }
+                        });
                     }
 
                     console.log(`focusDistance: min=${minFocusDistance.value}, max=${maxFocusDistance.value}, value=${focusDistance.value}`)
@@ -275,7 +269,6 @@
                     capabilities,
                     showCapabilities,
                     prettyPrintCapability,
-                    onRequestDeviceOrientation,
                     tools,
                     angle,
                     debugStr,

@@ -9,6 +9,10 @@
     <link rel="manifest" href="manifest.json" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <style>
+         @viewport {
+            orientation: landscape;
+        }
+
         .monitor {
             object-fit: cover;
             width: 100vw;
@@ -60,7 +64,7 @@
         </div>
 
         <div class="fixed bottom-4 right-4 text-white font-black m-2 z-8">
-            <div v-if="tools.includes('angle') && angle" :class="{'text-red-500': !isValidAngle}">
+            <div v-if="angle" :class="{'text-red-500': !isValidAngle}">
                 {{ angle.toFixed(2) }}°
             </div>
             <div v-else>
@@ -68,7 +72,10 @@
             </div>
         </div>
 
-        <div class="flex items-center justify-center fixed flex-col top-0 right-5 bottom-0">
+        <div
+            class="fixed flex justify-center"
+            :class="[orientation?.includes('landscape') ? 'flex-col top-0 right-5 bottom-0' : 'left-0 right-0 bottom-5']"
+        >
             <button @click="captureImage" class="w-16 h-16 bg-white border-4 border-gray-300 rounded-full relative flex items-center justify-center">
                 <div class="w-12 h-12 bg-white rounded-full"></div>
             </button>
@@ -110,7 +117,6 @@
     <script>
         const { createApp, computed, ref, onMounted } = Vue;
         let track = null;
-        if (screen?.orientation?.lock) screen.orientation.lock('landscape-primary');
 
         createApp({
             setup() {
@@ -124,6 +130,8 @@
                 const maxFocusDistance = ref(5);
                 const focusDistance = ref(0.12);
                 const maskAspectRatio = ref("4/3");
+                const orientation = ref(screen.orientation.type);
+                const maskMargins = ref(null);
 
                 const showZoom = ref(false);
                 const minZoom = ref(0.5);
@@ -136,46 +144,44 @@
                 let startZoomPctScreen = 1;
                 const hypotScreen = Math.hypot(window.screen.width, window.screen.height);
 
-                const maskMargins = computed(() => {
-                    const maskAspectRatioStr = maskAspectRatio.value.split('/').map(Number);
-                    const maskAspectRatioNum = maskAspectRatioStr[0] / maskAspectRatioStr[1];
+                const calculateMaskMargins = () => {
+                    setTimeout(() => {
+                        const maskAspectRatioStr = maskAspectRatio.value.split('/').map(Number);
+                        const maskAspectRatioNum = maskAspectRatioStr[0] / maskAspectRatioStr[1];
 
-                    const viewportWidth = window.innerWidth;
-                    const viewportHeight = window.innerHeight;
-                    const viewportAspectRatio = viewportWidth / viewportHeight;
+                        const viewportWidth = window.innerWidth;
+                        const viewportHeight = window.innerHeight;
+                        const viewportAspectRatio = viewportWidth / viewportHeight;
 
-                    let horizontalMargin = 0;
-                    let verticalMargin = 0;
+                        let horizontalMargin = 0;
+                        let verticalMargin = 0;
 
-                    if (viewportAspectRatio > maskAspectRatioNum) {
-                        // Viewport is wider than mask aspect ratio
-                        const maskHeight = viewportHeight * 0.7; // 15% margin on top and bottom
-                        const maskWidth = maskHeight * maskAspectRatioNum;
-                        horizontalMargin = (viewportWidth - maskWidth) / 2;
-                        verticalMargin = viewportHeight * 0.15; // 15% margin
-                    } else {
-                        // Viewport is taller than mask aspect ratio
-                        const maskWidth = viewportWidth * 0.7; // 15% margin on left and right
-                        const maskHeight = maskWidth / maskAspectRatioNum;
-                        horizontalMargin = viewportWidth * 0.15; // 15% margin
-                        verticalMargin = (viewportHeight - maskHeight) / 2;
-                    }
+                        if (viewportAspectRatio > maskAspectRatioNum) {
+                            // Viewport is wider than mask aspect ratio
+                            const maskHeight = viewportHeight * 0.7; // 15% margin on top and bottom
+                            const maskWidth = maskHeight * maskAspectRatioNum;
+                            horizontalMargin = (viewportWidth - maskWidth) / 2;
+                            verticalMargin = viewportHeight * 0.15; // 15% margin
+                        } else {
+                            // Viewport is taller than mask aspect ratio
+                            const maskWidth = viewportWidth * 0.7; // 15% margin on left and right
+                            const maskHeight = maskWidth / maskAspectRatioNum;
+                            horizontalMargin = viewportWidth * 0.15; // 15% margin
+                            verticalMargin = (viewportHeight - maskHeight) / 2;
+                        }
 
-                    return {
-                        top: `${verticalMargin}px`,
-                        bottom: `${verticalMargin}px`,
-                        left: `${horizontalMargin}px`,
-                        right: `${horizontalMargin}px`
-                    };
-                });
+                        maskMargins.value = {
+                            top: `${verticalMargin}px`,
+                            bottom: `${verticalMargin}px`,
+                            left: `${horizontalMargin}px`,
+                            right: `${horizontalMargin}px`
+                        };
 
-                const isValidAngle = computed(() => {
-                    return !angle.value || (angle.value < 55 && angle.value > 55);
-                });
+                    }, 100)
+                }
 
-                const isValidMask = computed(() => {
-                    return isValidAngle.value;
-                });
+                const isValidAngle = computed(() => !angle.value || (angle.value < 55 && angle.value > 45));
+                const isValidMask = computed(() => isValidAngle.value);
 
                 const onLoadStream = async () => {
                     const mediaStream = await navigator.mediaDevices.getUserMedia({ video: {
@@ -316,8 +322,18 @@
                 }
 
                 onMounted(async () => {
-                    window.scrollTo(0, 1);
                     onLoadStream();
+                    calculateMaskMargins();
+
+                    if (screen?.orientation) {
+                        screen.orientation.addEventListener("change", (event) => {
+                            orientation.value = event.target.type;
+                            if (event.beta !== null) angle.value = event.beta;
+                            calculateMaskMargins();
+                        });
+
+                        if (screen.orientation.lock) screen.orientation.lock('landscape-primary');
+                    }
                 });
 
                 const onToggleMask = () => {
@@ -334,14 +350,16 @@
                         default:
                             maskAspectRatio.value = "4/3";
                     }
+
+                    calculateMaskMargins();
                 }
 
                 const onRequestPermissions = async (request) => {
-                    if (request && DeviceMotionEvent?.requestPermission) await DeviceMotionEvent.requestPermission()
+                    if (request && DeviceMotionEvent?.requestPermission) {
+                        console.log('requesting permission')
+                        await DeviceMotionEvent.requestPermission()
+                    }
                     tools.value.push('angle');
-                    window.addEventListener("deviceorientation", (event) => {
-                        if (event.beta !== null) angle.value = event.beta;
-                    });
                 }
 
                 return {
@@ -376,6 +394,8 @@
                     isValidMask,
 
                     onRequestPermissions,
+
+                    orientation,
 
                     applyConstraints
                 };

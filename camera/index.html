@@ -71,8 +71,8 @@
             <div v-if="angle" :class="{'text-red-500': !isValidAngle}">
                 {{ angle.toFixed(2) }}°
             </div>
-            <div v-else>
-                <i class="fa fa-compass text-2xl" @click="onRequestPermissions(true)"></i>
+            <div v-else @click="onRequestPermissions(true)">
+                <i class="fa fa-compass text-2xl"></i>
             </div>
         </div>
 
@@ -359,6 +359,7 @@
                 }
 
                 const onRequestPermissions = async (request) => {
+                    console.log('what', request)
                     if (request && DeviceMotionEvent?.requestPermission) {
                         console.log('requesting permission')
                         await DeviceMotionEvent.requestPermission()

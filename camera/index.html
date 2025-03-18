@@ -17,11 +17,11 @@
 
         .hole {
             position: absolute;
-            box-shadow: 0 0 0 99999px rgba(0, 0, 0, .7);
+            box-shadow: 0 0 0 99999px rgba(0, 0, 0, .5);
         }
 
         .hole.error {
-            box-shadow: 0 0 0 99999px rgba(255, 0, 0, .7);
+            box-shadow: 0 0 0 99999px rgba(255, 0, 0, .5);
         }
     </style>
 </head>
@@ -177,13 +177,14 @@
                 const isValidMask = computed(() => isValidAngle.value);
 
                 const onLoadStream = async () => {
-                    const mediaStream = await navigator.mediaDevices.getUserMedia({ video: {
-                        facingMode: "environment",
-                        aspectRatio: 16/9,
-                        resizeMode: 'crop-and-scale',
-                        focusMode: 'continuous',
-                        advanced: [{ zoom: Number(zoom.value) }]
-                    } });
+                    const mediaStream = await navigator.mediaDevices.getUserMedia({
+                        video: {
+                            facingMode: "environment",
+                            aspectRatio: 16/9,
+                            focusMode: 'continuous',
+                            advanced: [{ zoom: Number(zoom.value) }]
+                        }
+                    });
 
                     video.value.srcObject = mediaStream;
 

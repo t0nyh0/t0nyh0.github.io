@@ -279,23 +279,14 @@
                 }
 
                 const onRequestPermissions = async () => {
-                    if (DeviceMotionEvent?.requestPermission) {
-                        console.log('requesting permission')
-                        const data = await DeviceMotionEvent.requestPermission()
-                        console.log(data)
-                    }
+                    if (DeviceMotionEvent?.requestPermission) await DeviceMotionEvent.requestPermission()
 
                     onLoadStream();
                     calculateMaskMargins();
 
-                    if (screen?.orientation) {
-                        screen.orientation.addEventListener("change", (event) => {
-                            console.log(event)
-                            orientation.value = event.target.type;
-                            if (event.beta !== null) angle.value = event.beta;
-                            calculateMaskMargins();
-                        });
-                    }
+                    winow.addEventListener("deviceorientation", (event) => {
+                        if (event.beta !== null) angle.value = event.beta;
+                    })
 
                     pane.value = 'camera'
                 }

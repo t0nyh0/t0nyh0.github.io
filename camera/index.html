@@ -9,26 +9,14 @@
     <link rel="manifest" href="manifest.json" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <style>
-         @viewport {
-            orientation: landscape;
-        }
-
-        * {
-            touch-action: manipulation;
-        }
-
         .monitor {
-            object-fit: cover;
             width: 100vw;
-            height: 100vh;
+            height: 100%;
             border: 0;
         }
 
-        html{position: relative; height: 100%; overflow: hidden;}
-
-
         .hole {
-            position: fixed;
+            position: absolute;
             box-shadow: 0 0 0 99999px rgba(0, 0, 0, .7);
         }
 
@@ -37,84 +25,87 @@
         }
     </style>
 </head>
-<body class="font-sans bg-black touch-none">
-    <div id="app" class="fixed inset-0">
-        <video class="monitor" ref="video" autoplay playsinline></video>
-        <canvas ref="canvas" class="hidden"></canvas>
+<body class="font-sans touch-none">
+    <div id="app" class="max-h-screen h-screen">
+        <div v-if="pane === 'permissions'" class="p-8 h-screen">
+            <h1 class="text-2xl font-black mb-4">Grant Permission</h1>
+            <p>Our super smart camera needs your permission to acess your camera and motion sensors.</p>
 
-        <div class="hole" :style="maskMargins" :class="{'error': !isValidMask}">
-            <div class="absolute inset-0 opacity-50" @touchstart="onTouchStart" @touchmove="onTouchMove" @touchend="onTouchEnd">
-                <div class="absolute top-1/3 w-full h-px bg-white"></div>
-                <div class="absolute top-2/3 w-full h-px bg-white"></div>
-                <div class="absolute left-1/3 h-full w-px bg-white"></div>
-                <div class="absolute left-2/3 h-full w-px bg-white"></div>
+            <div class="fixed left-0 right-0 bottom-8 text-center">
+            <button class="text-white font-bold text-sm rounded-2xl px-6 py-3" style="background-color: #00AEEF;" @click="onRequestPermissions">Grant Permission</button>
             </div>
         </div>
-
-        <div
-            class="fixed flex justify-center z-4"
-            :class="[orientation?.includes('landscape') ? 'flex-col top-1/3 right-5 bottom-1/3' : 'left-1/3 right-1/3 bottom-5']"
-        >
-            <button @click="captureImage" class="w-16 h-16 bg-white border-4 border-gray-300 rounded-full relative flex items-center justify-center">
-                <div class="w-12 h-12 bg-white rounded-full"></div>
-            </button>
-        </div>
-
-
-        <div class="flex flex-col fixed bottom-4 left-4 z-8">
-            <div class="p-1 text-xl font-semibold text-white m-2 touch-manipulation" :class="['flex-col']" @click="showCapabilities = true">
-                <i class="fa fa-circle-info"></i>
-            </div>
-            <div class="p-1 text-xl font-semibold text-white m-2 touch-manipulation" @click="showFocus = !showFocus" v-if="tools.includes('focusDistance')">
-                <i class="fa-solid fa-users-rectangle"></i>
-            </div>
-            <div class="p-1 text-xl font-semibold text-white m-2 touch-manipulation" @click="showZoom = !showZoom" v-if="tools.includes('zoom')">
-                <i class="fa-solid fa-search"></i>
+        <div v-else-if="pane === 'camera'" class="h-screen max-h-screen flex flex-col">
+            <div
+                class="fixed top-4 align-center left-1/2 text-white font-black mx-auto inline-block"
+                v-if="angle"
+                :class="{'text-red-500': !isValidAngle}"
+            >
+                {{ angle }}°
             </div>
 
-            <div class="p-1 m-2 text-white font-black touch-manipulation" @click="onToggleMask()">
-                {{ maskAspectRatio}}
-            </div>
-        </div>
+            <div class="relative overflow-hidden">
+                <video class="monitor" ref="video" autoplay playsinline></video>
+                <canvas ref="canvas" class="hidden"></canvas>
 
-        <div class="fixed bottom-4 right-4 text-white font-black m-2 z-8">
-            <div v-if="angle" :class="{'text-red-500': !isValidAngle}">
-                {{ angle.toFixed(2) }}°
-            </div>
-            <div v-else @click="onRequestPermissions(true)">
-                <i class="fa fa-compass text-2xl"></i>
-            </div>
-        </div>
+                <div class="hole absolute inset-0" :style="maskMargins" :class="{'error': !isValidMask}">
 
-        <div class="absolute top-4 left-12 right-12 flex-col items-center z-10 text-center" v-if="tools.includes('angle') || tools.includes('zoom') || tools.includes('focusDistance')">
-            <div class="my-2 bg-opacity-50 bg-black z-10 p-4 rounded-lg text-left" v-if="showFocus">
-                <p class="float-right text-sm text-green-500">{{focusDistance}}</p>
-                <h1 class="text-sm font-bold mb-2 text-white">Focus Distance</h1>
-                <input type="range" v-model="focusDistance" :min="minFocusDistance" step="0.1" :max="maxFocusDistance" @change="applyConstraints($event, 'focusDistance', $event.target.value)" class="w-full" />
+                </div>
+                <div class="absolute inset-0 opacity-50 z-10" @touchstart="onTouchStart" @touchmove="onTouchMove" @touchend="onTouchEnd">
+                    <div class="absolute top-1/3 w-full h-px bg-white"></div>
+                    <div class="absolute top-2/3 w-full h-px bg-white"></div>
+                    <div class="absolute left-1/3 h-full w-px bg-white"></div>
+                    <div class="absolute left-2/3 h-full w-px bg-white"></div>
+                </div>
             </div>
 
-            <div class="my-2 bg-opacity-50 bg-black z-10 p-4 rounded-lg text-left" v-if="showZoom">
-                <p class="float-right text-sm text-green-500">{{zoom}}</p>
-                <h1 class="text-sm font-bold mb-2 text-white">Zoom</h1>
-                <input type="range" v-model="zoom" :min="minZoom" step="0.1" :max="maxZoom" class="w-full" @change="applyConstraints($event, 'zoom', $event.target.value)" />
+            <div class="flex-1 p-6 overflow-auto">
+                <h3 class="font-bold">UberEats Guidelines</h3>
+                <ul class="list-disc pl-5">
+                    <li>Use a tripod to avoid camera shake</li>
+                    <li>Show ingredients</li>
+                    <li>Use soft consistent lighting</li>
+                    <li>Center the item in the middle of the frame</li>
+                    <li>Dish filling 70-80% of frame</li>
+                    <li>90mm-105mm focal lengths are ideal if space allows - Step back from the dish and zoom into your subject, shooting too close may cause warped plates/tables</li>
+                    <li>No wide angle lens shots</li>
+                    <li>35-45° angle works best for most dishes</li>
+                    <li>0-20° works best for Burgers/Sandwiches/Beverages</li>
+                    <li>90° works well for flat items such as Pizza</li>
+                    <li>Check for focus and sharpness after every shot</li>
+                </ul>
             </div>
-        </div>
 
-        <div class="fixed inset-0 bg-blue-400 bg-opacity-100 z-10 p-6" v-if="showCapabilities">
-            <h1 class="text-lg font-bold mb-4">Camera Capabilities</h1>
+            <div class="flex justify-center py-8">
+                <div class="flex-1 flex items-center justify-center">
+                    <div class="font-black text-gray-700 rounded-md px-3 py-1 text-center border-2 border-gray-500" @click="onToggleMask()">
+                        {{ maskAspectRatio}}
+                    </div>
+                </div>
+                <button @click="captureImage" class="w-16 h-16 mx-4 bg-white border-4 border-gray-500 rounded-full relative flex items-center justify-center">
+                    <div class="w-12 h-12 bg-gray-50 rounded-full"></div>
+                </button>
+                <div class="flex-1 flex items-center justify-center">
+                    <i class="fa fa-circle-info  text-gray-700 text-3xl" @click="showCapabilities = true"></i>
+                </div>
+            </div>
 
-            <p class="text-xs text-pretty">
-                <p v-for="capability in capabilities" class="my-1">
-                    <strong>{{capability.key}}:</strong>
-                    {{prettyPrintCapability(capability)}}
+            <div class="fixed inset-0 bg-blue-400 bg-opacity-100 z-10 p-6" v-if="showCapabilities">
+                <h1 class="text-lg font-bold mb-4">Camera Capabilities</h1>
+
+                <p class="text-xs text-pretty">
+                    <p v-for="capability in capabilities" class="my-1">
+                        <strong>{{capability.key}}:</strong>
+                        {{prettyPrintCapability(capability)}}
+                    </p>
+
+                    <p v-html="debugStr"></p>
                 </p>
 
-                <p v-html="debugStr"></p>
-            </p>
-
-            <button @click="showCapabilities = false" class="absolute top-4 right-4 ">
-                <i class="fa fa-times text-2xl text-white"></i>
-            </button>
+                <button @click="showCapabilities = false" class="absolute top-4 right-4 ">
+                    <i class="fa fa-times text-2xl text-white"></i>
+                </button>
+            </div>
         </div>
     </div>
 
@@ -127,12 +118,10 @@
                 const video = ref(null);
                 const canvas = ref(null);
                 const capabilities = ref(null);
-                const tools = ref([]);
+
+                const pane = ref('permissions');
+
                 const showCapabilities = ref(false);
-                const showFocus = ref(false);
-                const minFocusDistance = ref(0.12);
-                const maxFocusDistance = ref(5);
-                const focusDistance = ref(0.12);
                 const maskAspectRatio = ref("4/3");
                 const orientation = ref(screen.orientation.type);
                 const maskMargins = ref(null);
@@ -193,40 +182,13 @@
                         aspectRatio: 16/9,
                         resizeMode: 'crop-and-scale',
                         focusMode: 'continuous',
-                        advanced: [{ zoom: Number(zoom.value), focusDistance: Number(focusDistance.value) }]
+                        advanced: [{ zoom: Number(zoom.value) }]
                     } });
 
                     video.value.srcObject = mediaStream;
 
                     track = mediaStream.getVideoTracks()[0];
                     const tc = track.getCapabilities();
-
-                    const EXCLUDE_CAPABILITIES = ['deviceId', 'groupId'];
-                    capabilities.value = Object
-                        .keys(tc)
-                        .filter(key => !EXCLUDE_CAPABILITIES.includes(key))
-                        .map((key) => Object.assign({}, { key }, tc[key]));
-
-                    tools.value = capabilities.value.map(capability => capability.key);
-
-                    const focusDistanceCapabilities  = capabilities.value.find(capability => capability.key === 'focusDistance');
-                    if (focusDistanceCapabilities) {
-                        minFocusDistance.value = focusDistanceCapabilities.min;
-                        maxFocusDistance.value = focusDistanceCapabilities.max ?? 3;
-                        focusDistance.value = focusDistanceCapabilities.min;
-                    }
-
-                    const zoomCapabilities  = capabilities.value.find(capability => capability.key === 'zoom');
-                    if (zoomCapabilities) {
-                        minZoom.value = zoomCapabilities.min;
-                        maxZoom.value = zoomCapabilities.max ?? 3;
-                        zoom.value = zoomCapabilities.min;
-                    }
-
-                    onRequestPermissions();
-
-                    console.log(`focusDistance: min=${minFocusDistance.value}, max=${maxFocusDistance.value}, value=${focusDistance.value}`)
-                    console.log(`zoom: min=${minZoom.value}, max=${maxZoom.value}, value=${zoom.value}`)
 
                     applyConstraints()
                 };
@@ -286,59 +248,17 @@
                     a.click();
                 };
 
-                const onTouchStart = (event) => {
-                    const touches = event.touches;
-                    if (touches.length === 2) {
-                        startZoomPctScreen = Math.hypot(touches[0].pageX - touches[1].pageX, touches[0].pageY - touches[1].pageY) / hypotScreen;
-                    }
-                }
-
-                const onTouchMove = (event) => {
-                    event.preventDefault();
-                    const touches = event.touches;
-
-                    if (touches.length === 2) {
-                        const pctOfScreen = Math.hypot(touches[0].pageX - touches[1].pageX, touches[0].pageY - touches[1].pageY) / hypotScreen
-                        const newZoom = zoom.value * Math.min(Math.max(0.92, (pctOfScreen / startZoomPctScreen)), 1.08);
-
-                        console.log(`pinch: old=${zoom.value}, new=${newZoom}`)
-
-                        zoom.value = Math.min(Math.max(minZoom.value, newZoom), maxZoom.value);
-                        applyConstraints(undefined, 'zoom', zoom.value);
-                    }
-                };
-
-                const onTouchEnd = () => {
-                    startZoomPctScreen = null;
-                };
-
                 const prettyPrintCapability = (capability) => {
                     return Object.keys(capability).filter((key) => key !== 'key').map(key => `${key}=${capability[key]}`).join(', ')
                 }
 
                 const applyConstraints = (event, dimension, val) => {
                     if (dimension === 'zoom') zoom.value = val;
-                    else if (dimension === 'focusDistance') focusDistance.value = val;
 
                     if (dimension) console.log(`apply: ${dimension}=${val}`)
 
-                    track?.applyConstraints({ advanced: [{ zoom: Number(zoom.value), focusDistance: Number(focusDistance.value) }] });
+                    track?.applyConstraints({ advanced: [{ zoom: Number(zoom.value) }] });
                 }
-
-                onMounted(async () => {
-                    onLoadStream();
-                    calculateMaskMargins();
-
-                    if (screen?.orientation) {
-                        screen.orientation.addEventListener("change", (event) => {
-                            orientation.value = event.target.type;
-                            if (event.beta !== null) angle.value = event.beta;
-                            calculateMaskMargins();
-                        });
-
-                        if (screen.orientation.lock) screen.orientation.lock('landscape-primary');
-                    }
-                });
 
                 const onToggleMask = () => {
                     switch (maskAspectRatio.value) {
@@ -358,13 +278,26 @@
                     calculateMaskMargins();
                 }
 
-                const onRequestPermissions = async (request) => {
-                    console.log('what', request)
-                    if (request && DeviceMotionEvent?.requestPermission) {
+                const onRequestPermissions = async () => {
+                    if (DeviceMotionEvent?.requestPermission) {
                         console.log('requesting permission')
-                        await DeviceMotionEvent.requestPermission()
+                        const data = await DeviceMotionEvent.requestPermission()
+                        console.log(data)
                     }
-                    tools.value.push('angle');
+
+                    onLoadStream();
+                    calculateMaskMargins();
+
+                    if (screen?.orientation) {
+                        screen.orientation.addEventListener("change", (event) => {
+                            console.log(event)
+                            orientation.value = event.target.type;
+                            if (event.beta !== null) angle.value = event.beta;
+                            calculateMaskMargins();
+                        });
+                    }
+
+                    pane.value = 'camera'
                 }
 
                 return {
@@ -374,17 +307,8 @@
                     capabilities,
                     showCapabilities,
                     prettyPrintCapability,
-                    tools,
                     angle,
                     debugStr,
-                    onTouchStart,
-                    onTouchMove,
-                    onTouchEnd,
-
-                    showFocus,
-                    minFocusDistance,
-                    maxFocusDistance,
-                    focusDistance,
 
                     showZoom,
                     minZoom,
@@ -398,9 +322,9 @@
                     isValidAngle,
                     isValidMask,
 
-                    onRequestPermissions,
+                    pane,
 
-                    orientation,
+                    onRequestPermissions,
 
                     applyConstraints
                 };

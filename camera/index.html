@@ -51,12 +51,10 @@
                 </div>
             </div>
 
-            <div
-                class="fixed top-4 align-center text-white font-black mx-auto inline-block z-10 bg-white rounded-lg px-4 py-2"
-                v-if="angle"
-                :class="{'text-red-500': !isValidAngle}"
-            >
-                {{ angle.toFixed(2) }}°
+            <div class="fixed top-4 left-0 right-0 text-center">
+                <div class="inline-block text-white font-black z-10 bg-white rounded-lg px-4 py-2">
+                    {{ angle?.toFixed(0) }}°
+                </div>
             </div>
 
             <div class="flex-1 px-6 pt-6 overflow-auto pb-12">
@@ -173,7 +171,7 @@
                     }, 100)
                 }
 
-                const isValidAngle = computed(() => !angle.value || (angle.value < 55 && angle.value > 45));
+                const isValidAngle = computed(() => !angle.value || (angle.value <= 45 && angle.value >= 35));
                 const isValidMask = computed(() => isValidAngle.value);
 
                 const onLoadStream = async () => {

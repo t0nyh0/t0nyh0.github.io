@@ -176,8 +176,8 @@
                     const context = canvas.value.getContext('2d');
 
                     // Get viewport size
-                    const viewportWidth = window.innerWidth;
-                    const viewportHeight = window.innerHeight;
+                    const viewportWidth = cameraCntr.value.clientWidth;
+                    const viewportHeight = cameraCntr.value.clientHeight;
 
                     // Get video dimensions from the camera stream
                     const videoWidth = video.value.videoWidth;

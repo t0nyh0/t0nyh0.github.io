@@ -36,7 +36,7 @@
             </div>
         </div>
         <div v-else-if="pane === 'camera'" class="flex flex-col h-screen">
-            <div class="relative overflow-hidden h-2/5">
+            <div class="relative overflow-hidden h-2/5 bg-black" ref="cameraCntr">
                 <video class="monitor" ref="video" autoplay playsinline></video>
                 <canvas ref="canvas" class="hidden"></canvas>
                 <div class="hole absolute inset-0" :style="maskMargins" :class="{'error': !isValidMask}">
@@ -83,26 +83,8 @@
                     <div class="w-12 h-12 bg-gray-50 rounded-full"></div>
                 </button>
                 <div class="flex-1 flex items-center justify-center">
-                    <i class="fa fa-circle-info text-gray-700 text-2xl" @click="showCapabilities = true"></i>
                 </div>
             </div>
-        </div>
-
-        <div class="fixed inset-0 bg-blue-400 bg-opacity-100 z-10 p-6" v-if="showCapabilities">
-            <h1 class="text-lg font-bold mb-4">Camera Capabilities</h1>
-
-            <p class="text-xs text-pretty">
-                <p v-for="capability in capabilities" class="my-1">
-                    <strong>{{capability.key}}:</strong>
-                    {{prettyPrintCapability(capability)}}
-                </p>
-
-                <p v-html="debugStr"></p>
-            </p>
-
-            <button @click="showCapabilities = false" class="absolute top-4 right-4 ">
-                <i class="fa fa-times text-2xl text-white"></i>
-            </button>
         </div>
     </div>
 
@@ -114,14 +96,13 @@
             setup() {
                 const video = ref(null);
                 const canvas = ref(null);
-                const capabilities = ref(null);
 
                 const pane = ref('permissions');
 
-                const showCapabilities = ref(false);
                 const maskAspectRatio = ref("4/3");
                 const orientation = ref(screen.orientation.type);
                 const maskMargins = ref(null);
+                const cameraCntr = ref(null);
 
                 const showZoom = ref(false);
                 const minZoom = ref(0.5);
@@ -131,16 +112,13 @@
                 const angle = ref(null);
                 const debugStr = ref(null);
 
-                let startZoomPctScreen = 1;
-                const hypotScreen = Math.hypot(window.screen.width, window.screen.height);
-
                 const calculateMaskMargins = () => {
                     setTimeout(() => {
                         const maskAspectRatioStr = maskAspectRatio.value.split('/').map(Number);
                         const maskAspectRatioNum = maskAspectRatioStr[0] / maskAspectRatioStr[1];
 
-                        const viewportWidth = window.innerWidth;
-                        const viewportHeight = window.innerHeight;
+                        const viewportWidth = cameraCntr.value.clientWidth;
+                        const viewportHeight = cameraCntr.value.clientHeight;
                         const viewportAspectRatio = viewportWidth / viewportHeight;
 
                         let horizontalMargin = 0;
@@ -148,15 +126,15 @@
 
                         if (viewportAspectRatio > maskAspectRatioNum) {
                             // Viewport is wider than mask aspect ratio
-                            const maskHeight = viewportHeight * 0.7; // 15% margin on top and bottom
+                            const maskHeight = viewportHeight * 0.8; // 15% margin on top and bottom
                             const maskWidth = maskHeight * maskAspectRatioNum;
                             horizontalMargin = (viewportWidth - maskWidth) / 2;
-                            verticalMargin = viewportHeight * 0.15; // 15% margin
+                            verticalMargin = viewportHeight * 0.05; // 15% margin
                         } else {
                             // Viewport is taller than mask aspect ratio
-                            const maskWidth = viewportWidth * 0.7; // 15% margin on left and right
+                            const maskWidth = viewportWidth * 0.8; // 15% margin on left and right
                             const maskHeight = maskWidth / maskAspectRatioNum;
-                            horizontalMargin = viewportWidth * 0.15; // 15% margin
+                            horizontalMargin = viewportWidth * 0.05; // 15% margin
                             verticalMargin = (viewportHeight - maskHeight) / 2;
                         }
 
@@ -248,10 +226,6 @@
                     a.click();
                 };
 
-                const prettyPrintCapability = (capability) => {
-                    return Object.keys(capability).filter((key) => key !== 'key').map(key => `${key}=${capability[key]}`).join(', ')
-                }
-
                 const applyConstraints = (event, dimension, val) => {
                     if (dimension === 'zoom') zoom.value = val;
 
@@ -295,9 +269,6 @@
                     video,
                     canvas,
                     captureImage,
-                    capabilities,
-                    showCapabilities,
-                    prettyPrintCapability,
                     angle,
                     debugStr,
 
@@ -314,6 +285,7 @@
                     isValidMask,
 
                     pane,
+                    cameraCntr,
 
                     onRequestPermissions,
 

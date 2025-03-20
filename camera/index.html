@@ -156,7 +156,9 @@
                     const mediaStream = await navigator.mediaDevices.getUserMedia({
                         video: {
                             facingMode: "environment",
-                            aspectRatio: {exact: 16/9},
+                            aspectRatio: { exact: 16/9 },
+                            width: { exact: 1920 },
+                            height: { exact: 1080 },
                             focusMode: 'continuous',
                             advanced: [{ zoom: Number(zoom.value) }]
                         }
@@ -209,6 +211,9 @@
                     // Set canvas size to match adjusted crop dimensions
                     canvas.value.width = adjustedCropWidth;
                     canvas.value.height = adjustedCropHeight;
+
+                    console.log(videoWidth, videoHeight)
+                    console.log(adjustedCropWidth, adjustedCropHeight)
 
                     // Draw the cropped video frame onto the canvas
                     context.drawImage(

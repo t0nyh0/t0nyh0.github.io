@@ -10,8 +10,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <style>
         .monitor {
-            width: 100vw;
-            height: 40vh;
+            height: 100vh;
             border: 0;
         }
 
@@ -155,9 +154,7 @@
                     const mediaStream = await navigator.mediaDevices.getUserMedia({
                         video: {
                             facingMode: "environment",
-                            aspectRatio: 16/9,
-                            width: { min: 1024, ideal: 1280, max: 1920 },
-                            height: { min: 576, ideal: 720, max: 1080 },
+                            aspectRatio: {exact: 16/9},
                             focusMode: 'continuous',
                             advanced: [{ zoom: Number(zoom.value) }]
                         }

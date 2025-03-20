@@ -149,7 +149,7 @@
                     }, 100)
                 }
 
-                const isValidAngle = computed(() => !angle.value || (angle.value <= 45 && angle.value >= 35));
+                const isValidAngle = computed(() => !angle.value || (angle.value <= 50 && angle.value >= 40));
                 const isValidMask = computed(() => isValidAngle.value);
 
                 const onLoadStream = async () => {

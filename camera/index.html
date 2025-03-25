@@ -253,7 +253,7 @@
                     calculateMaskMargins();
 
                     window.addEventListener("deviceorientation", (event) => {
-                        if (event.beta !== null) angle.value = event.beta;
+                        if (event.beta !== null) angle.value = 90 - event.beta;
                     })
 
                     pane.value = 'camera'

@@ -157,8 +157,8 @@
                         video: {
                             facingMode: "environment",
                             aspectRatio: { exact: 16/9 },
-                            width: { exact: 3840 },
-                            height: { exact: 2160 },
+                            width: { exact: 7680 },
+                            height: { exact: 4320 },
                             focusMode: 'continuous',
                             advanced: [{ zoom: Number(zoom.value) }]
                         }
@@ -201,25 +201,15 @@
                         startY = (videoHeight - cropHeight) / 2;
                     }
 
-                    // Adjust crop dimensions based on maskMargins
-                    const maskMarginsValue = maskMargins.value;
-                    const adjustedCropWidth = cropWidth * (1 - 2 * parseFloat(maskMarginsValue.left) / viewportWidth);
-                    const adjustedCropHeight = cropHeight * (1 - 2 * parseFloat(maskMarginsValue.top) / viewportHeight);
-                    const adjustedStartX = startX + cropWidth * parseFloat(maskMarginsValue.left) / viewportWidth;
-                    const adjustedStartY = startY + cropHeight * parseFloat(maskMarginsValue.top) / viewportHeight;
-
                     // Set canvas size to match adjusted crop dimensions
-                    canvas.value.width = adjustedCropWidth;
-                    canvas.value.height = adjustedCropHeight;
-
-                    console.log(videoWidth, videoHeight)
-                    console.log(adjustedCropWidth, adjustedCropHeight)
+                    canvas.value.width = cropWidth;
+                    canvas.value.height = cropHeight;
 
                     // Draw the cropped video frame onto the canvas
                     context.drawImage(
                         video.value,
-                        adjustedStartX, adjustedStartY, adjustedCropWidth, adjustedCropHeight, // Source (video)
-                        0, 0, adjustedCropWidth, adjustedCropHeight    // Destination (canvas)
+                        adjustedStartX, adjustedStartY, cropWidth, cropHeight, // Source (video)
+                        0, 0, cropWidth, cropHeight    // Destination (canvas)
                     );
 
                     // Convert to high-quality image

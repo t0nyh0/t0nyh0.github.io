@@ -50,6 +50,16 @@
                     <div class="absolute left-2/3 h-full w-px bg-white"></div>
                 </div>
 
+                <div class="absolute flex m-auto w-16 h-12" :style="maskMargins" v-if="angle">
+                    <div class="border-t border-b border-r border-gray-100 h-12 w-7 mr-2 relative border-opacity-50">
+                        <div class="h-0.5 w-6 bg-white bg-opacity-50 absolute" :style="{top: `${angleStylePct}%`}"></div>
+                    </div>
+                    <div class="border-t border-b border-l border-gray-100 h-12 w-7 ml-2 relative border-opacity-50">
+                        <div class="h-0.5 w-6 bg-white  bg-opacity-50 absolute" :style="{top: `${angleStylePct}%`}"></div>
+                    </div>
+                </div>
+
+
                 <div class="fixed top-4 left-0 right-0 text-center" v-if="angle">
                     <div class="inline-block text-black text-sm font-black z-10 bg-white rounded-lg px-3 py-1">
                         {{ angle?.toFixed(0) }}°
@@ -150,6 +160,12 @@
                 }
 
                 const isValidAngle = computed(() => !angle.value || (angle.value <= 50 && angle.value >= 40));
+                const angleStylePct = computed(() => {
+                    if (!angle.value) return 0;
+                    if (angle.value < 40) return 0;
+                    if (angle.value > 50) return 100;
+                    return ((angle.value - 40) / 10) * 100;
+                });
                 const isValidMask = computed(() => isValidAngle.value);
 
                 const onLoadStream = async () => {

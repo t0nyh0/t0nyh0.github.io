@@ -256,16 +256,14 @@
                 };
 
                 const processFrame = () => {
-                    if (!video.value) return;
+                    if (!video.value || !canvas.value) return;
 
-                    let c = document.createElement('canvas')
-                    const context = c.getContext('2d');
-                    c.width = video.value.videoWidth;
-                    c.height = video.value.videoHeight;
-                    context.drawImage(video.value, 0, 0, c.width, c.height);
-                    const frameData = context.getImageData(0, 0, c.width, c.height).data;
+                    const context = canvas.value.getContext('2d');
+                    canvas.value.width = video.value.videoWidth;
+                    canvas.value.height = video.value.videoHeight;
+                    context.drawImage(video.value, 0, 0, canvas.value.width, canvas.value.height);
+                    const frameData = context.getImageData(0, 0, canvas.value.width, canvas.value.height).data;
                     exposure.value = calculateExposure(frameData);
-
                     requestAnimationFrame(processFrame);
                 };
 

@@ -108,7 +108,6 @@
                 const orientation = ref(screen.orientation.type);
                 const maskMargins = ref(null);
                 const cameraCntr = ref(null);
-                const offscreenCanvas = new OffscreenCanvas(1, 1);
 
                 const showZoom = ref(false);
                 const minZoom = ref(0.5);
@@ -236,51 +235,59 @@
                 const calculateExposure = (frameData) => {
                     const histogram = new Array(256).fill(0);
                     for (let i = 0; i < frameData.length; i += 4) {
-                        // Convert RGB to grayscale using luminance formula
-                        const grayscale = Math.round(
-                            0.299 * frameData[i] + 0.587 * frameData[i + 1] + 0.114 * frameData[i + 2]
-                        );
+                        const grayscale = Math.round(0.299 * frameData[i] + 0.587 * frameData[i + 1] + 0.114 * frameData[i + 2]);
                         histogram[grayscale]++;
                     }
 
-                    const totalPixels = frameData.length / 4;
                     let totalBrightness = 0;
-                    for (let i = 0; i < histogram.length; i++) {
-                        totalBrightness += histogram[i] * i;
-                    }
+                    for (let i = 0; i < histogram.length; i++) totalBrightness += histogram[i] * i;
 
+                    const totalPixels = frameData.length / 4;
                     const averageBrightness = totalBrightness / totalPixels;
+
                     return Math.round((averageBrightness / 255) * 100);
                 };
 
                 let frameSkipCounter = 0; // Counter to skip frames
 
+                const frameProcessor = {
+                    lastProcessedTime: 0,
+                    processingInterval: 100, // Process every 100ms
+                    scaleRatio: 4, // Scale down factor for processing
+                    offscreenCanvas: new OffscreenCanvas(1, 1),
+                    ctx: null
+                };
+
                 const processFrame = async () => {
-                    if (!video.value || !canvas.value) return;
+                    if (!video.value) return;
 
-                    // Skip frames to reduce processing frequency
-                    const framesToSkip = 2; // Process every 3rd frame
-                    if (frameSkipCounter < framesToSkip) {
-                        frameSkipCounter++;
-                        requestAnimationFrame(processFrame);
-                        return;
+                    const now = performance.now();
+                    if (now - frameProcessor.lastProcessedTime > frameProcessor.processingInterval) {
+                        frameProcessor.lastProcessedTime = now;
+
+                        // Lazy init context
+                        if (!frameProcessor.ctx) {
+                            frameProcessor.ctx = frameProcessor.offscreenCanvas.getContext('2d', {
+                                alpha: false,
+                                willReadFrequently: true
+                            });
+                        }
+
+                        // Scale dimensions
+                        const scaledWidth = Math.floor(video.value.videoWidth / frameProcessor.scaleRatio);
+                        const scaledHeight = Math.floor(video.value.videoHeight / frameProcessor.scaleRatio);
+
+                        // Resize canvas if needed
+                        if (frameProcessor.offscreenCanvas.width !== scaledWidth) {
+                            frameProcessor.offscreenCanvas.width = scaledWidth;
+                            frameProcessor.offscreenCanvas.height = scaledHeight;
+                        }
+
+                        // Draw and process
+                        frameProcessor.ctx.drawImage(video.value, 0, 0, scaledWidth, scaledHeight);
+                        const imageData = frameProcessor.ctx.getImageData(0, 0, scaledWidth, scaledHeight);
+                        exposure.value = calculateExposure(imageData.data);
                     }
-                    frameSkipCounter = 0;
-
-                    // Scale down resolution for performance
-                    const scaledWidth = Math.floor(video.value.videoWidth / 4);
-                    const scaledHeight = Math.floor(video.value.videoHeight / 4);
-
-                    // Resize offscreen canvas if needed
-                    if (offscreenCanvas.width !== scaledWidth || offscreenCanvas.height !== scaledHeight) {
-                        offscreenCanvas.width = scaledWidth;
-                        offscreenCanvas.height = scaledHeight;
-                    }
-
-                    const offscreenCtx = offscreenCanvas.getContext('2d');
-                    offscreenCtx.drawImage(video.value, 0, 0, scaledWidth, scaledHeight);
-                    const imageData = offscreenCtx.getImageData(0, 0, scaledWidth, scaledHeight);
-                    exposure.value = calculateExposure(imageData.data);
 
                     requestAnimationFrame(processFrame);
                 };

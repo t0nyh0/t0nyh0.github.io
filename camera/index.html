@@ -43,7 +43,7 @@
                 <div class="hole absolute inset-0" :style="maskMargins" :class="{'error': !isValidMask}">
                 </div>
 
-                <div class="absolute flex m-auto w-16 h-20" :style="maskMargins" v-if="angle">
+                <div class="absolute flex m-auto w-16 h-20 mb-8" :style="maskMargins" v-if="angle">
                     <div class="border border-gray-100 h-32 w-32 relative border-opacity-50 rounded-full">
                         <div class="h-0.5 w-48 bg-white bg-opacity-50 absolute left-1/2 -ml-24" :style="{top: `${angleStylePct}%`}"></div>
                     </div>
@@ -256,17 +256,22 @@
                 const processFrame = async () => {
                     if (!video.value || !canvas.value) return;
 
-                    // Resize offscreen canvas if needed
-                    if (offscreenCanvas.value.width !== video.value.videoWidth) {
-                            offscreenCanvas.value.width = video.value.videoWidth;
-                            offscreenCanvas.value.height = video.value.videoHeight;
-                        }
+                    // Scale down resolution for performance
+                    const scaledWidth = Math.floor(video.value.videoWidth / 4);
+                    const scaledHeight = Math.floor(video.value.videoHeight / 4);
 
-                        const offscreenCtx = offscreenCanvas.value.getContext('2d');
-                        offscreenCtx.drawImage(video.value, 0, 0);
-                        const imageData = offscreenCtx.getImageData(0, 0, offscreenCanvas.value.width, offscreenCanvas.value.height);
-                        exposure.value = calculateExposure(imageData.data);
-                        requestAnimationFrame(processFrame);
+                    // Resize offscreen canvas if needed
+                    if (offscreenCanvas.value.width !== scaledWidth || offscreenCanvas.value.height !== scaledHeight) {
+                        offscreenCanvas.value.width = scaledWidth;
+                        offscreenCanvas.value.height = scaledHeight;
+                    }
+
+                    const offscreenCtx = offscreenCanvas.value.getContext('2d');
+                    offscreenCtx.drawImage(video.value, 0, 0, scaledWidth, scaledHeight);
+                    const imageData = offscreenCtx.getImageData(0, 0, scaledWidth, scaledHeight);
+                    exposure.value = calculateExposure(imageData.data);
+
+                    requestAnimationFrame(processFrame);
                 };
 
                 const applyConstraints = (event, dimension, val) => {

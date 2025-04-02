@@ -39,12 +39,11 @@
         <div v-else-if="pane === 'camera'" class="flex flex-col h-screen">
             <div class="relative overflow-hidden h-2/5 bg-black" ref="cameraCntr">
                 <video class="monitor" ref="video" autoplay playsinline></video>
-                <canvas ref="canvas" class="hidden"></canvas>
                 <div class="hole absolute inset-0" :style="maskMargins" :class="{'error': !isValidMask}">
                 </div>
 
                 <div class="absolute flex mx-auto" :style="maskMargins" v-if="angle">
-                    <div class="border border-gray-100 h-40 w-40 relative border-opacity-50 rounded-full m-auto">
+                    <div class="border border-gray-100 h-36 w-36 relative border-opacity-50 rounded-full m-auto">
                         <div class="h-0.5 w-56 bg-white bg-opacity-50 absolute left-1/2 -ml-28" :style="{top: `${angleStylePct}%`}"></div>
                     </div>
                 </div>
@@ -100,7 +99,6 @@
         createApp({
             setup() {
                 const video = ref(null);
-                const canvas = ref(null);
 
                 const pane = ref('permissions');
 
@@ -185,47 +183,15 @@
                 };
 
                 const captureImage = () => {
-                    if (!video.value || !canvas.value) return;
+                    if (!video.value) return;
 
-                    const context = canvas.value.getContext('2d');
+                    if (!frameProcessor.ctx) frameProcessor.ctx = frameProcessor.offscreenCanvas.getContext('2d', { alpha: false, willReadFrequently: true});
 
-                    // Get viewport size
-                    const viewportWidth = cameraCntr.value.clientWidth;
-                    const viewportHeight = cameraCntr.value.clientHeight;
+                    frameProcessor.offscreenCanvas.width = video.value.videoWidth;
+                    frameProcessor.offscreenCanvas.height = video.value.videoHeight;
+                    frameProcessor.ctx.drawImage(video.value, 0, 0, video.value.videoWidth, video.value.videoHeight);
 
-                    // Get video dimensions from the camera stream
-                    const videoWidth = video.value.videoWidth;
-                    const videoHeight = video.value.videoHeight;
-                    const videoAspectRatio = videoWidth / videoHeight;
-                    const viewportAspectRatio = viewportWidth / viewportHeight;
-
-                    let cropWidth, cropHeight, startX, startY;
-
-                    if (videoAspectRatio > viewportAspectRatio) {
-                        cropHeight = videoHeight;
-                        cropWidth = videoHeight * viewportAspectRatio;
-                        startX = (videoWidth - cropWidth) / 2;
-                        startY = 0;
-                    } else {
-                        cropWidth = videoWidth;
-                        cropHeight = videoWidth / viewportAspectRatio;
-                        startX = 0;
-                        startY = (videoHeight - cropHeight) / 2;
-                    }
-
-                    // Set canvas size to match adjusted crop dimensions
-                    canvas.value.width = cropWidth;
-                    canvas.value.height = cropHeight;
-
-                    // Draw the cropped video frame onto the canvas
-                    context.drawImage(
-                        video.value,
-                        adjustedStartX, adjustedStartY, cropWidth, cropHeight, // Source (video)
-                        0, 0, cropWidth, cropHeight    // Destination (canvas)
-                    );
-
-                    // Convert to high-quality image
-                    const imageData = canvas.value.toDataURL('image/jpeg', 1.0); // High quality JPEG
+                    const imageData = frameProcessor.offscreenCanvas.toDataURL('image/jpeg', 1.0);
                     const a = document.createElement('a');
                     a.href = imageData;
                     a.download = `${new Date().getTime()}.jpg`;
@@ -265,7 +231,6 @@
                     if (now - frameProcessor.lastProcessedTime > frameProcessor.processingInterval) {
                         frameProcessor.lastProcessedTime = now;
 
-                        // Lazy init context
                         if (!frameProcessor.ctx) {
                             frameProcessor.ctx = frameProcessor.offscreenCanvas.getContext('2d', {
                                 alpha: false,
@@ -273,11 +238,9 @@
                             });
                         }
 
-                        // Scale dimensions
                         const scaledWidth = Math.floor(video.value.videoWidth / frameProcessor.scaleRatio);
                         const scaledHeight = Math.floor(video.value.videoHeight / frameProcessor.scaleRatio);
 
-                        // Resize canvas if needed
                         if (frameProcessor.offscreenCanvas.width !== scaledWidth) {
                             frameProcessor.offscreenCanvas.width = scaledWidth;
                             frameProcessor.offscreenCanvas.height = scaledHeight;
@@ -333,7 +296,6 @@
 
                 return {
                     video,
-                    canvas,
                     captureImage,
                     angle,
                     debugStr,

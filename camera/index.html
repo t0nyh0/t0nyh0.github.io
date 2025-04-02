@@ -52,7 +52,7 @@
                     </div>
                 </div>
 
-                <div class="absolute bottom-4 text-center text-white text-sm font-black z-10 left-0 right-0">
+                <div class="absolute bottom-2 text-center text-white text-sm font-black z-10 left-0 right-0">
                     <div class="mx-auto inline-block">
                         <i class="fa-solid fa-sun mr-1"></i>
                         {{ exposure }}%&nbsp;
@@ -284,16 +284,22 @@
                 }
 
                 const onRequestPermissions = async () => {
-                    if (DeviceMotionEvent?.requestPermission) await DeviceMotionEvent.requestPermission()
+                    try {
+                        await navigator.mediaDevices.getUserMedia({ video: true });
+                        if (DeviceMotionEvent?.requestPermission) await DeviceMotionEvent.requestPermission();
 
-                    onLoadStream();
-                    calculateMaskMargins();
+                        calculateMaskMargins();
+                        onLoadStream();
 
-                    window.addEventListener("deviceorientation", (event) => {
-                        if (event.beta !== null) angle.value = 90 - event.beta;
-                    })
+                        window.addEventListener("deviceorientation", (event) => {
+                            if (event.beta !== null) angle.value = 90 - event.beta;
+                        });
 
-                    pane.value = 'camera'
+                        pane.value = 'camera';
+                    } catch (error) {
+                        console.error("Permission request failed:", error);
+                        alert("Camera or motion sensor permissions are required to use this feature.");
+                    }
                 }
 
                 return {

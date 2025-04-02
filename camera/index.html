@@ -285,8 +285,8 @@
 
                 const onRequestPermissions = async () => {
                     try {
-                        await navigator.mediaDevices.getUserMedia({ video: true });
                         if (DeviceMotionEvent?.requestPermission) await DeviceMotionEvent.requestPermission();
+                        await navigator.mediaDevices.getUserMedia({ video: true });
 
                         calculateMaskMargins();
                         onLoadStream();

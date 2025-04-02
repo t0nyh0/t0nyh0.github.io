@@ -44,11 +44,8 @@
                 </div>
 
                 <div class="absolute flex m-auto w-16 h-12" :style="maskMargins" v-if="angle">
-                    <div class="border-t border-b border-r border-gray-100 h-12 w-7 mr-2 relative border-opacity-50">
-                        <div class="h-0.5 w-6 bg-white bg-opacity-50 absolute" :style="{top: `${angleStylePct}%`}"></div>
-                    </div>
-                    <div class="border-t border-b border-l border-gray-100 h-12 w-7 ml-2 relative border-opacity-50">
-                        <div class="h-0.5 w-6 bg-white  bg-opacity-50 absolute" :style="{top: `${angleStylePct}%`}"></div>
+                    <div class="border border-gray-100 h-12 w-16 ml-2 relative border-opacity-50">
+                        <div class="h-0.5 w-16 bg-white bg-opacity-50 absolute" :style="{top: `${angleStylePct}%`}"></div>
                     </div>
                 </div>
 
@@ -255,15 +252,20 @@
                     return Math.round((averageBrightness / 255) * 100);
                 };
 
-                const processFrame = () => {
+                const processFrame = async () => {
                     if (!video.value || !canvas.value) return;
 
-                    const context = canvas.value.getContext('2d');
-                    canvas.value.width = video.value.videoWidth;
-                    canvas.value.height = video.value.videoHeight;
-                    context.drawImage(video.value, 0, 0, canvas.value.width, canvas.value.height);
-                    const frameData = context.getImageData(0, 0, canvas.value.width, canvas.value.height).data;
-                    exposure.value = calculateExposure(frameData);
+                    const imageCapture = new ImageCapture(track);
+                    const imageBitmap = await imageCapture.grabFrame();
+
+                    // Get frame data using createImageBitmap
+                    const frameData = new Uint8ClampedArray(imageBitmap.width * imageBitmap.height * 4);
+                    const tempCanvas = new OffscreenCanvas(imageBitmap.width, imageBitmap.height);
+                    const tempCtx = tempCanvas.getContext('2d');
+                    tempCtx.drawImage(imageBitmap, 0, 0);
+                    const imageData = tempCtx.getImageData(0, 0, imageBitmap.width, imageBitmap.height);
+
+                    exposure.value = calculateExposure(imageData.data);
                     requestAnimationFrame(processFrame);
                 };
 

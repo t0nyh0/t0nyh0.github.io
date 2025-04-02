@@ -43,9 +43,9 @@
                 <div class="hole absolute inset-0" :style="maskMargins" :class="{'error': !isValidMask}">
                 </div>
 
-                <div class="absolute flex m-auto w-16 h-12" :style="maskMargins" v-if="angle">
-                    <div class="border border-gray-100 h-12 w-16 ml-2 relative border-opacity-50">
-                        <div class="h-0.5 w-16 bg-white bg-opacity-50 absolute" :style="{top: `${angleStylePct}%`}"></div>
+                <div class="absolute flex m-auto w-16 h-20" :style="maskMargins" v-if="angle">
+                    <div class="border border-gray-100 h-32 w-32 relative border-opacity-50 rounded-full">
+                        <div class="h-0.5 w-48 bg-white bg-opacity-50 absolute left-1/2 -ml-12" :style="{top: `${angleStylePct}%`}"></div>
                     </div>
                 </div>
 

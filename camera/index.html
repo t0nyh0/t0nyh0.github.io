@@ -255,17 +255,22 @@
                 const processFrame = async () => {
                     if (!video.value || !canvas.value) return;
 
-                    const imageCapture = new ImageCapture(track);
-                    const imageBitmap = await imageCapture.grabFrame();
-
-                    // Get frame data using createImageBitmap
-                    const frameData = new Uint8ClampedArray(imageBitmap.width * imageBitmap.height * 4);
-                    const tempCanvas = new OffscreenCanvas(imageBitmap.width, imageBitmap.height);
+                    // Create temporary canvas for frame capture
+                    const tempCanvas = document.createElement('canvas');
+                    tempCanvas.width = video.value.videoWidth;
+                    tempCanvas.height = video.value.videoHeight;
                     const tempCtx = tempCanvas.getContext('2d');
-                    tempCtx.drawImage(imageBitmap, 0, 0);
-                    const imageData = tempCtx.getImageData(0, 0, imageBitmap.width, imageBitmap.height);
 
+                    // Draw current video frame to temp canvas
+                    tempCtx.drawImage(video.value, 0, 0);
+
+                    // Get frame data
+                    const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+
+                    // Calculate exposure from frame data
                     exposure.value = calculateExposure(imageData.data);
+
+                    // Continue processing frames
                     requestAnimationFrame(processFrame);
                 };
 

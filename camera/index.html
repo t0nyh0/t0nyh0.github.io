@@ -6,6 +6,7 @@
     <title>SmartShoot Super Camera</title>
     <script src="vue.global.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
     <link rel="manifest" href="manifest.json" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <style>
@@ -224,34 +225,31 @@
                     ctx: null
                 };
 
-                const processFrame = async () => {
+                const throttledProcessFrame = _.throttle(async () => {
                     if (!video.value) return;
 
-                    const now = performance.now();
-                    if (now - frameProcessor.lastProcessedTime > frameProcessor.processingInterval) {
-                        frameProcessor.lastProcessedTime = now;
-
-                        if (!frameProcessor.ctx) {
-                            frameProcessor.ctx = frameProcessor.offscreenCanvas.getContext('2d', {
-                                alpha: false,
-                                willReadFrequently: true
-                            });
-                        }
-
-                        const scaledWidth = Math.floor(video.value.videoWidth / frameProcessor.scaleRatio);
-                        const scaledHeight = Math.floor(video.value.videoHeight / frameProcessor.scaleRatio);
-
-                        if (frameProcessor.offscreenCanvas.width !== scaledWidth) {
-                            frameProcessor.offscreenCanvas.width = scaledWidth;
-                            frameProcessor.offscreenCanvas.height = scaledHeight;
-                        }
-
-                        // Draw and process
-                        frameProcessor.ctx.drawImage(video.value, 0, 0, scaledWidth, scaledHeight);
-                        const imageData = frameProcessor.ctx.getImageData(0, 0, scaledWidth, scaledHeight);
-                        exposure.value = calculateExposure(imageData.data);
+                    if (!frameProcessor.ctx) {
+                        frameProcessor.ctx = frameProcessor.offscreenCanvas.getContext('2d', {
+                            alpha: false,
+                            willReadFrequently: true
+                        });
                     }
 
+                    const scaledWidth = Math.floor(video.value.videoWidth / frameProcessor.scaleRatio);
+                    const scaledHeight = Math.floor(video.value.videoHeight / frameProcessor.scaleRatio);
+
+                    if (frameProcessor.offscreenCanvas.width !== scaledWidth) {
+                        frameProcessor.offscreenCanvas.width = scaledWidth;
+                        frameProcessor.offscreenCanvas.height = scaledHeight;
+                    }
+
+                    frameProcessor.ctx.drawImage(video.value, 0, 0, scaledWidth, scaledHeight);
+                    const imageData = frameProcessor.ctx.getImageData(0, 0, scaledWidth, scaledHeight);
+                    exposure.value = calculateExposure(imageData.data);
+                }, 100); // Throttle to execute at most once every 100ms
+
+                const processFrame = () => {
+                    throttledProcessFrame();
                     requestAnimationFrame(processFrame);
                 };
 
@@ -285,14 +283,14 @@
                     try {
                         if (DeviceMotionEvent?.requestPermission) await DeviceMotionEvent.requestPermission();
 
-                        await onLoadStream();
-                        calculateMaskMargins();
-
                         window.addEventListener("deviceorientation", (event) => {
                             if (event.beta !== null) angle.value = 90 - event.beta;
                         });
 
                         pane.value = 'camera';
+
+                        onLoadStream();
+                        calculateMaskMargins();
                     } catch (error) {
                         console.error("Permission request failed:", error);
                         alert("Camera or motion sensor permissions are required to use this feature.");

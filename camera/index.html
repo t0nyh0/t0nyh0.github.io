@@ -108,7 +108,7 @@
                 const orientation = ref(screen.orientation.type);
                 const maskMargins = ref(null);
                 const cameraCntr = ref(null);
-                const offscreenCanvas = ref(new OffscreenCanvas(1, 1));
+                const offscreenCanvas = new OffscreenCanvas(1, 1);
 
                 const showZoom = ref(false);
                 const minZoom = ref(0.5);
@@ -261,12 +261,12 @@
                     const scaledHeight = Math.floor(video.value.videoHeight / 4);
 
                     // Resize offscreen canvas if needed
-                    if (offscreenCanvas.value.width !== scaledWidth || offscreenCanvas.value.height !== scaledHeight) {
-                        offscreenCanvas.value.width = scaledWidth;
-                        offscreenCanvas.value.height = scaledHeight;
+                    if (offscreenCanvas.width !== scaledWidth || offscreenCanvas.height !== scaledHeight) {
+                        offscreenCanvas.width = scaledWidth;
+                        offscreenCanvas.height = scaledHeight;
                     }
 
-                    const offscreenCtx = offscreenCanvas.value.getContext('2d');
+                    const offscreenCtx = offscreenCanvas.getContext('2d');
                     offscreenCtx.drawImage(video.value, 0, 0, scaledWidth, scaledHeight);
                     const imageData = offscreenCtx.getImageData(0, 0, scaledWidth, scaledHeight);
                     exposure.value = calculateExposure(imageData.data);

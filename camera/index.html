@@ -253,8 +253,19 @@
                     return Math.round((averageBrightness / 255) * 100);
                 };
 
+                let frameSkipCounter = 0; // Counter to skip frames
+
                 const processFrame = async () => {
                     if (!video.value || !canvas.value) return;
+
+                    // Skip frames to reduce processing frequency
+                    const framesToSkip = 2; // Process every 3rd frame
+                    if (frameSkipCounter < framesToSkip) {
+                        frameSkipCounter++;
+                        requestAnimationFrame(processFrame);
+                        return;
+                    }
+                    frameSkipCounter = 0;
 
                     // Scale down resolution for performance
                     const scaledWidth = Math.floor(video.value.videoWidth / 4);

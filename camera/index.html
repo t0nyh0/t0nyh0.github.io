@@ -42,21 +42,23 @@
                 <div class="hole absolute inset-0" :style="maskMargins" :class="{'error': !isValidMask}">
                 </div>
 
-                <div class="absolute flex mx-auto" :style="maskMargins" v-if="angle">
+                <div class="absolute flex mx-auto" :style="maskMargins">
                     <div class="border border-gray-100 h-36 w-36 relative border-opacity-50 rounded-full m-auto">
                         <div class="h-0.5 w-56 bg-white bg-opacity-50 absolute left-1/2 -ml-28" :style="{top: `${angleStylePct}%`}"></div>
                     </div>
+
+                    <div class="absolute inset-0 flex items-center justify-center text-white text-sm font-black z-10">
+                        {{ angle?.toFixed(0) }}°
+                    </div>
                 </div>
 
-                <div class="absolute bottom-4 left-4 text-center text-white text-sm font-black z-10 flex items-center">
-                    <i class="fa-solid fa-sun mr-1"></i>
-                    {{ exposure }}%&nbsp;
-                    <template v-if="exposure > 70">(Too Light)</template>
-                    <template v-else-if="exposure < 30">(Too Dark)</template>
-                </div>
-
-                <div class="absolute bottom-4 right-4 text-center text-white text-sm font-black z-10" v-if="angle">
-                    {{ angle?.toFixed(0) }}°
+                <div class="absolute bottom-4 text-center text-white text-sm font-black z-10 left-0 right-0">
+                    <div class="mx-auto inline-block">
+                        <i class="fa-solid fa-sun mr-1"></i>
+                        {{ exposure }}%&nbsp;
+                        <template v-if="exposure > 70">(Too Light)</template>
+                        <template v-else-if="exposure < 30">(Too Dark)</template>
+                    </div>
                 </div>
             </div>
 

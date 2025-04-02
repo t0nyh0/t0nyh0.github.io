@@ -177,9 +177,7 @@
 
                     video.value.srcObject = mediaStream;
                     video.value.addEventListener('play', () => processFrame());
-
                     track = mediaStream.getVideoTracks()[0];
-                    const tc = track.getCapabilities();
 
                     applyConstraints()
                 };
@@ -286,10 +284,9 @@
                 const onRequestPermissions = async () => {
                     try {
                         if (DeviceMotionEvent?.requestPermission) await DeviceMotionEvent.requestPermission();
-                        await navigator.mediaDevices.getUserMedia({ video: true });
 
+                        await onLoadStream();
                         calculateMaskMargins();
-                        onLoadStream();
 
                         window.addEventListener("deviceorientation", (event) => {
                             if (event.beta !== null) angle.value = 90 - event.beta;

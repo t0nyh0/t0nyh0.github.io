@@ -2,114 +2,390 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, maximum-scale=1.0, user-scalable=no, minimal-ui">
     <title>SmartShoot Super Camera</title>
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="vue.global.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+    <link rel="manifest" href="manifest.json" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <style>
+        .monitor {
+            position: absolute;
+            inset: 0;
+            margin: auto;
+            border: 0;
+        }
+
+        .hole {
+            position: absolute;
+            box-shadow: 0 0 0 99999px rgba(0, 0, 0, .5);
+        }
+
+        .hole.error {
+            box-shadow: 0 0 0 99999px rgba(255, 0, 0, .5);
+        }
+    </style>
 </head>
-<body class="font-sans bg-blue-950">
-    <div id="app" class="w-full flex flex-col">
-      <div class="flex-1 bg-black text-white flex flex-col">
-        <div class="relative flex-1">
-            <video ref="video" autoplay playsinline class="w-full h-full"></video>
-            <canvas ref="canvas" class="absolute inset-0"></canvas>
-            <div v-if="!isFoodDetected" class="absolute top-4 right-4 bg-red-600 text-white px-4 py-2 rounded shadow-lg">
-                Not food
-            </div>
+<body class="font-sans touch-none">
+    <div id="app" class="max-h-screen h-screen">
+        <div v-if="pane === 'permissions'" class="p-8">
+            <h1 class="text-2xl font-black mb-4">Grant Permission</h1>
+            <p>Our super smart camera needs your permission to acess your camera and motion sensors.</p>
 
-            <div v-if="prediction" class="absolute top-4 left-4 bg-gray-600 text-white px-4 py-2 rounded shadow-lg">
-                {{ prediction }}
-            </div>
-
-            <div class="absolute inset-0 pointer-events-none" v-if="showGrid">
-                <div class="absolute top-1/3 w-full h-px bg-white"></div>
-                <div class="absolute top-2/3 w-full h-px bg-white"></div>
-                <div class="absolute left-1/3 h-full w-px bg-white"></div>
-                <div class="absolute left-2/3 h-full w-px bg-white"></div>
+            <div class="fixed left-0 right-0 bottom-8 text-center">
+            <button class="text-white font-bold text-sm rounded-2xl px-6 py-3" style="background-color: #00AEEF;" @click="onRequestPermissions">Grant Permission</button>
             </div>
         </div>
-        <div class="px-8 py-6 flex items-center justify-between">
-            <button @click="toggleGrid" class="text-white text-2xl">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-8 h-8">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v18M15 3v18M3 9h18M3 15h18" />
-                </svg>
-            </button>
-            <button @click="captureImage" class="w-16 h-16 bg-white border-4 border-gray-300 rounded-full relative flex items-center justify-center">
-                <div class="w-12 h-12 bg-white rounded-full"></div>
-            </button>
-            <div class="w-8"></div>
+        <div v-else-if="pane === 'camera'" class="flex flex-col h-screen">
+            <div class="relative overflow-hidden h-2/5 bg-black" ref="cameraCntr">
+                <video class="monitor" ref="video" autoplay playsinline></video>
+                <div class="hole absolute inset-0" :style="maskMargins" :class="{'error': !isValidMask}">
+                </div>
+
+                <div class="absolute flex mx-auto" :style="maskMargins">
+                    <div class="border border-gray-100 h-36 w-36 relative border-opacity-50 rounded-full m-auto">
+                        <div class="h-0.5 w-56 bg-white bg-opacity-50 absolute left-1/2 -ml-28" :style="{top: `${angleStylePct}%`}"></div>
+                    </div>
+
+                    <div class="absolute inset-0 flex items-center justify-center text-white text-sm font-black z-10">
+                        {{ angle?.toFixed(0) }}°
+                    </div>
+                </div>
+
+                <div class="absolute bottom-2 text-center text-white text-sm font-black z-10 left-0 right-0">
+                    <div class="mx-auto inline-block">
+                        <i class="fa-solid fa-sun mr-1"></i>
+                        {{ exposure }}%&nbsp;
+                        <template v-if="exposure > 70">(Too Light)</template>
+                        <template v-else-if="exposure < 30">(Too Dark)</template>
+                    </div>
+
+                    ({{ predictedLabel }})
+                </div>
+            </div>
+
+            <div class="flex-1 px-6 pt-6 pb-48 overflow-auto">
+                <h3 class="font-bold">UberEats Guidelines</h3>
+                <ul class="list-disc pl-5">
+                    <li>Use a tripod to avoid camera shake</li>
+                    <li>Show ingredients</li>
+                    <li>Use soft consistent lighting</li>
+                    <li>Center the item in the middle of the frame</li>
+                    <li>Dish filling 70-80% of frame</li>
+                    <li>90mm-105mm focal lengths are ideal if space allows - Step back from the dish and zoom into your subject, shooting too close may cause warped plates/tables</li>
+                    <li>No wide angle lens shots</li>
+                    <li>35-45° angle works best for most dishes</li>
+                    <li>0-20° works best for Burgers/Sandwiches/Beverages</li>
+                    <li>90° works well for flat items such as Pizza</li>
+                    <li>Check for focus and sharpness after every shot</li>
+                </ul>
+            </div>
+
+            <div class="fixed bottom-0 left-0 right-0 flex justify-center py-5 border-t border-gray-200 min-h-1/3 bg-white shadow-lg">
+                <div class="flex-1 flex items-center justify-center">
+                    <div class="font-black text-gray-700 rounded-md px-3 py-1 text-center  text-sm border-2 border-gray-500" @click="onToggleMask()">
+                        {{ maskAspectRatio}}
+                    </div>
+                </div>
+                <button @click="captureImage" class="w-14 h-14 mx-4 bg-white border-4 border-gray-500 rounded-full relative flex items-center justify-center">
+                    <div class="w-12 h-12 bg-gray-50 rounded-full"></div>
+                </button>
+                <div class="flex-1 flex items-center justify-center">
+                </div>
+            </div>
         </div>
-      </div>
-      <div class="p-4 text-white">
-        <h3 class="font-bold">UberEats Guidelines</h3>
-        <p>Ensure food is not half-eaten</p>
-      </div>
     </div>
 
     <script>
-        const { createApp, ref, onMounted } = Vue;
+        const { createApp, computed, ref, onMounted } = Vue;
+        let track = null;
+        let tfModel = null;
+
+        async function loadModel() {
+            try {
+                tfModel = await tf.loadGraphModel('tfjs_model/model.json');
+                console.log('TensorFlow.js model loaded successfully.');
+            } catch (error) {
+                console.error('Failed to load TensorFlow.js model:', error);
+            }
+        }
 
         createApp({
             setup() {
                 const video = ref(null);
-                const canvas = ref(null);
-                const showGrid = ref(false);
-                const isFoodDetected = ref(true);
-                const prediction = ref(null);
-                let stream = null;
-                let model = null;
-                let offscreenCanvas = document.createElement("canvas");
-                let offscreenCtx = offscreenCanvas.getContext("2d");
 
-                onMounted(async () => {
-                    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-                    model = await mobilenet.load();
-                    video.value.onloadedmetadata = () => detectFood();
-                    video.value.srcObject = stream;
+                const pane = ref('permissions');
+
+                const maskAspectRatio = ref("4/3");
+                const orientation = ref(screen.orientation.type);
+                const maskMargins = ref(null);
+                const cameraCntr = ref(null);
+                const predictedLabel = ref(null);
+
+                const showZoom = ref(false);
+                const minZoom = ref(0.5);
+                const maxZoom = ref(5);
+                const zoom = ref(0.5);
+                const exposure = ref(0);
+
+                const angle = ref(null);
+                const debugStr = ref(null);
+
+                const calculateMaskMargins = () => {
+                    setTimeout(() => {
+                        const maskAspectRatioStr = maskAspectRatio.value.split('/').map(Number);
+                        const maskAspectRatioNum = maskAspectRatioStr[0] / maskAspectRatioStr[1];
+
+                        const viewportWidth = cameraCntr.value.clientWidth;
+                        const viewportHeight = cameraCntr.value.clientHeight;
+                        const viewportAspectRatio = viewportWidth / viewportHeight;
+
+                        let horizontalMargin = 0;
+                        let verticalMargin = 0;
+
+                        if (viewportAspectRatio > maskAspectRatioNum) {
+                            const maskHeight = viewportHeight * 0.8;
+                            const maskWidth = maskHeight * maskAspectRatioNum;
+                            horizontalMargin = (viewportWidth - maskWidth) / 2;
+                            verticalMargin = viewportHeight * 0.05;
+                        } else {
+                            const maskWidth = viewportWidth * 0.8;
+                            const maskHeight = maskWidth / maskAspectRatioNum;
+                            horizontalMargin = viewportWidth * 0.05;
+                            verticalMargin = (viewportHeight - maskHeight) / 2;
+                        }
+
+                        maskMargins.value = {
+                            top: `${verticalMargin}px`,
+                            bottom: `${verticalMargin}px`,
+                            left: `${horizontalMargin}px`,
+                            right: `${horizontalMargin}px`
+                        };
+
+                    }, 100)
+                }
+
+                const isValidAngle = computed(() => !angle.value || (angle.value <= 50 && angle.value >= 40));
+                const angleStylePct = computed(() => {
+                    if (!angle.value) return 0;
+                    if (angle.value < 40) return 0;
+                    if (angle.value > 50) return 100;
+                    return ((angle.value - 40) / 10) * 100;
                 });
+                const isValidMask = computed(() => isValidAngle.value);
 
-                const toggleGrid = () => {
-                    showGrid.value = !showGrid.value;
-                };
+                const onLoadStream = async () => {
+                    const mediaStream = await navigator.mediaDevices.getUserMedia({
+                        video: {
+                            facingMode: "environment",
+                            aspectRatio: { exact: 16/9 },
+                            width: { ideal: 5120/2 },
+                            height: { ideal: 2880/2 },
+                            focusMode: 'continuous',
+                            advanced: [{ zoom: Number(zoom.value) }]
+                        }
+                    });
 
-                const detectFood = async () => {
-                    if (!model || !video.value) return;
+                    video.value.srcObject = mediaStream;
+                    video.value.addEventListener('loadedmetadata', () => {
+                        console.log("Video metadata loaded");
+                        processFrame();
+                    });
+                    track = mediaStream.getVideoTracks()[0];
 
-                    const processFrame = async () => {
-                        if (!video.value || !model) return;
-
-                        offscreenCanvas.width = video.value.videoWidth;
-                        offscreenCanvas.height = video.value.videoHeight;
-                        offscreenCtx.drawImage(video.value, 0, 0, offscreenCanvas.width, offscreenCanvas.height);
-                        const predictions = await model.classify(video.value);
-                        prediction.value = predictions[0].className.split(',')[0];
-
-                        isFoodDetected.value = predictions.some(p => p.className.toLowerCase().includes("food") || p.className.toLowerCase().includes("lime") || p.className.toLowerCase().includes("fruit"));
-
-                        requestAnimationFrame(processFrame);
-                    };
-
-                    processFrame();
+                    applyConstraints()
                 };
 
                 const captureImage = () => {
-                    if (!video.value || !canvas.value) return;
+                    if (!video.value) return;
 
-                    const context = canvas.value.getContext('2d');
-                    canvas.value.width = video.value.videoWidth;
-                    canvas.value.height = video.value.videoHeight;
-                    context.drawImage(video.value, 0, 0, canvas.value.width, canvas.value.height);
+                    if (!frameProcessor.ctx) frameProcessor.ctx = frameProcessor.offscreenCanvas.getContext('2d', { alpha: false, willReadFrequently: true});
 
-                    const imageData = canvas.value.toDataURL('image/png');
+                    frameProcessor.offscreenCanvas.width = video.value.videoWidth;
+                    frameProcessor.offscreenCanvas.height = video.value.videoHeight;
+                    frameProcessor.ctx.drawImage(video.value, 0, 0, video.value.videoWidth, video.value.videoHeight);
+
+                    const imageData = frameProcessor.offscreenCanvas.toDataURL('image/jpeg', 1.0);
                     const a = document.createElement('a');
                     a.href = imageData;
-                    a.download = 'captured_image.png';
+                    a.download = `${new Date().getTime()}.jpg`;
                     a.click();
                 };
 
-                return { video, canvas, showGrid, toggleGrid, isFoodDetected, captureImage, prediction };
+                const calculateExposure = (frameData) => {
+                    const histogram = new Array(256).fill(0);
+                    for (let i = 0; i < frameData.length; i += 4) {
+                        const grayscale = Math.round(0.299 * frameData[i] + 0.587 * frameData[i + 1] + 0.114 * frameData[i + 2]);
+                        histogram[grayscale]++;
+                    }
+
+                    let totalBrightness = 0;
+                    for (let i = 0; i < histogram.length; i++) totalBrightness += histogram[i] * i;
+
+                    const totalPixels = frameData.length / 4;
+                    const averageBrightness = totalBrightness / totalPixels;
+
+                    return Math.round((averageBrightness / 255) * 100);
+                };
+
+                let frameSkipCounter = 0;
+
+                const frameProcessor = {
+                    lastProcessedTime: 0,
+                    processingInterval: 100,
+                    scaleRatio: 4,
+                    offscreenCanvas: new OffscreenCanvas(1, 1),
+                    ctx: null,
+                    aiCanvas: new OffscreenCanvas(1, 1),
+                    aiCtx: null,
+                    modelInputShape: null
+                };
+
+                const throttledProcessFrame = _.throttle(async () => {
+                    if (!video.value || video.value.readyState < video.value.HAVE_METADATA || !tfModel) return;
+
+                    if (!frameProcessor.ctx) {
+                        frameProcessor.ctx = frameProcessor.offscreenCanvas.getContext('2d', { alpha: false, willReadFrequently: true });
+                    }
+                    const scaledWidth = Math.floor(video.value.videoWidth / frameProcessor.scaleRatio);
+                    const scaledHeight = Math.floor(video.value.videoHeight / frameProcessor.scaleRatio);
+                    if (frameProcessor.offscreenCanvas.width !== scaledWidth || frameProcessor.offscreenCanvas.height !== scaledHeight) {
+                        frameProcessor.offscreenCanvas.width = scaledWidth;
+                        frameProcessor.offscreenCanvas.height = scaledHeight;
+                    }
+                    frameProcessor.ctx.drawImage(video.value, 0, 0, scaledWidth, scaledHeight);
+                    const imageData = frameProcessor.ctx.getImageData(0, 0, scaledWidth, scaledHeight);
+                    exposure.value = calculateExposure(imageData.data);
+
+                    if (!frameProcessor.modelInputShape) {
+                        frameProcessor.modelInputShape = tfModel.inputs[0].shape.slice(1);
+                        console.log("Model Input Shape:", frameProcessor.modelInputShape);
+                        frameProcessor.aiCanvas.width = frameProcessor.modelInputShape[1];
+                        frameProcessor.aiCanvas.height = frameProcessor.modelInputShape[0];
+                        frameProcessor.aiCtx = frameProcessor.aiCanvas.getContext('2d', { alpha: false, willReadFrequently: false });
+                    }
+
+                    const [inputHeight, inputWidth] = frameProcessor.modelInputShape;
+
+                    frameProcessor.aiCtx.drawImage(video.value, 0, 0, inputWidth, inputHeight);
+
+                    const frameImageData = frameProcessor.aiCtx.getImageData(0, 0, inputWidth, inputHeight);
+
+                    const inputTensor = tf.tidy(() => {
+                        const tensor = tf.browser.fromPixels(frameImageData);
+                        const floatTensor = tensor.cast('float32');
+                        return floatTensor.expandDims(0);
+                    });
+
+
+                    try {
+                        const outputTensor = tfModel.execute(inputTensor);
+
+                        const outputData = outputTensor.dataSync();
+
+                        let maxIndex = 0;
+                        let maxValue = outputData[0];
+                        for (let i = 1; i < outputData.length; i++) {
+                            if (outputData[i] > maxValue) {
+                                maxValue = outputData[i];
+                                maxIndex = i;
+                            }
+                        }
+
+                        const labels = ['BADCROP', 'GOOD', 'OOF', 'GRAINY', 'TOODARK', 'WRONGANGLEFORITEM'];
+
+                        predictedLabel.value = labels[maxIndex] || `Class ${maxIndex}`;
+
+                        tf.dispose(outputTensor);
+                    } catch (error) {
+                        console.error("Error during model prediction:", error);
+                    } finally {
+                         tf.dispose(inputTensor);
+                    }
+
+
+                }, 200);
+
+                const processFrame = () => {
+                    throttledProcessFrame();
+                    requestAnimationFrame(processFrame);
+                };
+
+                const applyConstraints = (event, dimension, val) => {
+                    if (dimension === 'zoom') zoom.value = val;
+
+                    if (dimension) console.log(`apply: ${dimension}=${val}`)
+
+                    track?.applyConstraints({ advanced: [{ zoom: Number(zoom.value) }] });
+                }
+
+                const onToggleMask = () => {
+                    switch (maskAspectRatio.value) {
+                        case "4/3":
+                            maskAspectRatio.value = "5/4";
+                            break;
+                        case "5/4":
+                            maskAspectRatio.value = "16/9";
+                            break;
+                        case "16/9":
+                            maskAspectRatio.value = "4/3";
+                            break;
+                        default:
+                            maskAspectRatio.value = "4/3";
+                    }
+
+                    calculateMaskMargins();
+                }
+
+                const onRequestPermissions = async () => {
+                    try {
+                        if (DeviceMotionEvent?.requestPermission) await DeviceMotionEvent.requestPermission();
+
+                        window.addEventListener("deviceorientation", (event) => {
+                            if (event.beta !== null) angle.value = 90 - event.beta;
+                        });
+
+                        pane.value = 'camera';
+                        await loadModel();
+
+                        onLoadStream();
+                        calculateMaskMargins();
+                    } catch (error) {
+                        console.error("Permission request failed:", error);
+                        alert("Camera or motion sensor permissions are required to use this feature.");
+                    }
+                }
+
+                return {
+                    video,
+                    captureImage,
+                    angle,
+                    debugStr,
+
+                    showZoom,
+                    minZoom,
+                    maxZoom,
+                    zoom,
+
+                    maskMargins,
+                    maskAspectRatio,
+                    onToggleMask,
+                    exposure,
+
+                    isValidAngle,
+                    isValidMask,
+                    angleStylePct,
+
+                    pane,
+                    cameraCntr,
+                    predictedLabel,
+
+                    onRequestPermissions,
+
+                    applyConstraints
+                };
             }
         }).mount('#app');
     </script>

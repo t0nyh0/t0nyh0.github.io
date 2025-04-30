@@ -55,14 +55,15 @@
                 </div>
 
                 <div class="absolute bottom-2 text-center text-white text-sm font-black z-10 left-0 right-0">
-                    <div class="mx-auto inline-block">
+                    <div class="float-left">
                         <i class="fa-solid fa-sun mr-1"></i>
                         {{ exposure }}%&nbsp;
                         <template v-if="exposure > 70">(Too Light)</template>
                         <template v-else-if="exposure < 30">(Too Dark)</template>
                     </div>
-
-                    ({{ predictedLabel }})
+                    <div class="float-right">
+                        AI: ({{ predictedLabel }})
+                    </div>
                 </div>
             </div>
 
@@ -294,7 +295,7 @@
                             }
                         }
 
-                        const labels = ['BADCROP', 'GOOD', 'OOF', 'GRAINY', 'TOODARK', 'WRONGANGLEFORITEM'];
+                        const labels = ['BADCROP', 'WRONGANGLEFORITEM', 'OOF', 'GRAINY', 'TOODARK'];
 
                         predictedLabel.value = labels[maxIndex] || `Class ${maxIndex}`;
 

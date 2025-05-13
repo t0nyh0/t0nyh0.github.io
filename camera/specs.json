@@ -1,0 +1,54 @@
+[
+  {
+    "label": "PIZZA",
+    "angle": {
+      "min": 80,
+      "max": 100
+    },
+    "instructions": [
+      "Take the photo overhead.",
+      "Angle should be between 80 and 100 degrees"
+    ]
+  },
+  {
+    "label": "DRINK",
+    "angle": {
+      "min": 0,
+      "max": 40
+    },
+    "instructions": [
+      "Take the photo from the side.",
+      "Angle should be between 0 and 40 degrees",
+      "Make sure the brand is visible"
+    ]
+  },
+  {
+    "label": "BURGER",
+    "angle": {
+      "min": 35,
+      "max": 60
+    },
+    "instructions": [
+      "Take the photo from the side.",
+      "Angle should be between 35 and 60 degrees"
+    ]
+  },
+  {
+    "label": "SANDWICH",
+    "angle": {
+      "min": 35,
+      "max": 60
+    },
+    "instructions": [
+      "Take the photo from the side.",
+      "Angle should be between 35 and 60 degrees"
+    ]
+  },
+  {
+    "label": null,
+    "angle": {
+      "min": 0,
+      "max": 360
+    }
+  }
+]

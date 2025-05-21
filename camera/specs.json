@@ -1,54 +1,56 @@
 [
   {
-    "label": "PIZZA",
+    "label": "OVERHEAD",
     "angle": {
-      "min": 80,
-      "max": 100
+      "min": 85,
+      "max": 95
     },
     "instructions": [
-      "Take the photo overhead.",
-      "Angle should be between 80 and 100 degrees"
+      "This looks like a dish you should shoot from directly above."
     ]
   },
   {
-    "label": "DRINK",
+    "label": "ANGLED",
+    "angle": {
+      "min": 40,
+      "max": 50
+    },
+    "instructions": [
+      "This looks like a dish you should shoot from an angle."
+    ]
+  },
+  {
+    "label": "STRAIGHT",
     "angle": {
       "min": 0,
-      "max": 40
+      "max": 30
     },
     "instructions": [
-      "Take the photo from the side.",
-      "Angle should be between 0 and 40 degrees",
-      "Make sure the brand is visible"
+      "This looks like a dish that you should shoot from straight on."
     ]
   },
   {
-    "label": "BURGER",
-    "angle": {
-      "min": 35,
-      "max": 60
-    },
+    "label": "BADCROP",
     "instructions": [
-      "Take the photo from the side.",
-      "Angle should be between 35 and 60 degrees"
+      "Make sure you get the entire item inside the frame"
     ]
   },
   {
-    "label": "SANDWICH",
-    "angle": {
-      "min": 35,
-      "max": 60
-    },
+    "label": "TOODARK",
     "instructions": [
-      "Take the photo from the side.",
-      "Angle should be between 35 and 60 degrees"
+      "There is not enough light, find a spot near a window or a light source if possible."
+    ]
+  },
+  {
+    "label": "TOOLIGHT",
+    "instructions": [
+      "There is too much light and this image is overexposed"
     ]
   },
   {
     "label": null,
-    "angle": {
-      "min": 0,
-      "max": 360
-    }
+    "instructions": [
+      "Looking good!"
+    ]
   }
 ]

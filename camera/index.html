@@ -69,7 +69,7 @@
 
             <div class="flex-1 px-6 pt-6 pb-48 overflow-auto">
                 <div v-if="currentGuidelines" class="text-center">
-                    <h3 class="font-black mb-4 text-xl pb-2 border-b border-gray-100">{{ currentGuidelines.title }}</h3>
+                    <h3 class="font-black mb-4 text-xl pb-2 border-b border-gray-100" v-if="currentGuidelines.title">{{ currentGuidelines.title }}</h3>
                     <p class="my-2" v-for="instruction in currentGuidelines.instructions" :key="instruction">{{ instruction }}</p>
                 </div>
             </div>
@@ -136,11 +136,7 @@
                             }
                         }
                     }
-                    // Fallback to default spec if no specific label match or no predicted labels
-                    const defaultSpec = specs?.find(s => s.label === null);
-                    if (defaultSpec && defaultSpec.angle && typeof defaultSpec.angle.min === 'number' && typeof defaultSpec.angle.max === 'number') {
-                        return defaultSpec.angle;
-                    }
+
                     return { min: 35, max: 45 }; // Hardcoded fallback
                 });
 
@@ -156,11 +152,10 @@
                             }
                         }
                     }
-                    // Fallback to general guidelines if no specific label match or no predicted labels
+
                     const defaultSpec = specs?.find(s => s.label === null);
                     if (defaultSpec && defaultSpec.instructions) {
                          return {
-                            title: `General Guidelines (from spec)`,
                             instructions: defaultSpec.instructions
                         };
                     }
@@ -214,13 +209,12 @@
 
                     if (angle.value < min) return 0;
                     if (angle.value > max) return 100;
-                    if (max === min) return 50; // Handle case where min and max are the same
+                    if (max === min) return 50;
                     return ((angle.value - min) / (max - min)) * 100;
                 });
 
                 const isValidMask = computed(() => {
-                    // const isGoodAngle = !angle.value || (angle.value <= 50 && angle.value >= 40);
-                    const isGoodAngle = isValidAngle.value; // Use the new spec-sensitive isValidAngle
+                    const isGoodAngle = isValidAngle.value;
                     const isGoodExposure = exposure.value >= 30 && exposure.value <= 70;
                     return isGoodAngle && isGoodExposure;
                 });
@@ -366,34 +360,27 @@
 
                     try {
                         const outputTensor = tfModel.execute(inputTensor);
-
                         const outputData = outputTensor.dataSync();
-                        const confidenceThreshold = 0.8;
+                        const confidenceThreshold = 0.9;
                         const currentPredictions = [];
-                        const labels = ['WRONGANGLE', 'OVERHEAD', 'OOF', 'BURGER', 'GRAINY', 'BADCROP', 'SANDWICH', 'DRINK', 'PIZZA'];
+                        const labels = ['OVERHEAD','ANGLED','BADCROP','STRAIGHT'];
 
-                        for (let i = 0; i < outputData.length; i++) {
-                            if (outputData[i] > confidenceThreshold) {
-                                const label = labels[i] || `Class ${i}`; // Use predefined labels or a fallback
-                                currentPredictions.push(label);
+                        if (outputData.length > 0) {
+                            for (let i = 0; i < outputData.length; i++) {
+                                if (outputData[i] > confidenceThreshold) {
+                                    const label = labels[i];
+
+                                    const spec = specs.find(s => s.label === label);
+                                    if (spec && spec.angle) {
+                                        if (spec.angle.min > angle.value || spec.angle.max < angle.value) currentPredictions.push(label);
+                                    } else {
+                                        currentPredictions.push(label);
+                                    }
+                                }
                             }
-                        }
 
-                        if (currentPredictions.length === 0 && outputData.length > 0) {
-                            // If no prediction meets threshold, maybe take the highest one as a fallback or leave empty
-                            // For now, let's keep it empty if nothing meets threshold, or show top one if desired.
-                            // To show top one if nothing else:
-                            // let maxIndex = 0;
-                            // let maxValue = outputData[0];
-                            // for (let i = 1; i < outputData.length; i++) {
-                            //     if (outputData[i] > maxValue) {
-                            //         maxValue = outputData[i];
-                            //         maxIndex = i;
-                            //     }
-                            // }
-                            // if (maxValue > 0) { // Ensure there's some prediction
-                            //    currentPredictions.push(labels[maxIndex] || `Class ${maxIndex}`);
-                            // }
+                            if (exposure.value < 30) currentPredictions.push('TOODARK')
+                            else if (exposure.value > 70) currentPredictions.push('TOOLIGHT');
                         }
 
                         predictedLabel.value = currentPredictions;

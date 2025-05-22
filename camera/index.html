@@ -41,10 +41,12 @@
         <div v-else-if="pane === 'camera'" class="flex flex-col h-screen">
             <div class="relative overflow-hidden h-2/5 bg-black" ref="cameraCntr">
                 <video class="monitor" ref="video" autoplay playsinline></video>
-                <div class="hole absolute inset-0" :style="maskMargins" :class="{'error': !isValidMask}">
+
+                <div class="hole absolute inset-0" :style="maskMargins" :class="{'error': !isValidMask && hasDetected}">
+                    <div class="absolute inset-0 bg-white rounded-full" :style="maskMargins"></div>
                 </div>
 
-                <div class="absolute flex mx-auto" :style="maskMargins">
+                <div class="absolute flex mx-auto" :style="maskMargins" v-if="hasDetected">
                     <div class="border border-gray-100 h-36 w-36 relative border-opacity-50 rounded-full m-auto">
                         <div class="h-0.5 w-56 bg-white bg-opacity-50 absolute left-1/2 -ml-28" :style="{top: `${angleStylePct}%`}"></div>
                     </div>
@@ -61,7 +63,7 @@
                     <template v-else-if="exposure < 30">(Too Dark)</template>
                 </div>
 
-                <div class="absolute left-0 right-0 bottom-0 p-4 text-center text-white text-xs font-semibold z-10" v-if="predictedLabel.length === 0">
+                <div class="absolute left-0 right-0 bottom-0 p-4 text-center text-white text-xs font-semibold z-10" v-if="!hasDetected">
                     Detecting...
                 </div>
             </div>
@@ -125,6 +127,8 @@
                 const debugStr = ref(null);
 
                 const captureOffscreenCanvas = new OffscreenCanvas(1, 1); // Dedicated OffscreenCanvas for capture
+
+                const hasDetected = computed(() => predictedLabel.value.includes('STRAIGHT') || predictedLabel.value.includes('OVERHEAD') || predictedLabel.value.includes('ANGLED'));
 
                 const currentSpecAngle = computed(() => {
                     if (specs && predictedLabel.value && predictedLabel.value.length > 0) {
@@ -361,7 +365,7 @@
                     try {
                         const outputTensor = tfModel.execute(inputTensor);
                         const outputData = outputTensor.dataSync();
-                        const confidenceThreshold = 0.8;
+                        const confidenceThreshold = 0.6;
                         const currentPredictions = [];
                         const labels = ['OVERHEAD','ANGLED','BADCROP','STRAIGHT'];
 
@@ -481,6 +485,7 @@
                     currentGuidelines,
 
                     onRequestPermissions,
+                    hasDetected,
 
                     applyConstraints
                 };

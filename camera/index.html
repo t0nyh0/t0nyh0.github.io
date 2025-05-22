@@ -43,7 +43,6 @@
                 <video class="monitor" ref="video" autoplay playsinline></video>
 
                 <div class="hole absolute inset-0" :style="maskMargins" :class="{'error': !isValidMask }" v-if="hasDetected">
-                    <div class="absolute inset-0 bg-white rounded-full" :style="maskMargins"></div>
                 </div>
 
                 <div class="absolute flex mx-auto" :style="maskMargins" v-if="hasDetected">
@@ -366,7 +365,7 @@
                     try {
                         const outputTensor = tfModel.execute(inputTensor);
                         const outputData = outputTensor.dataSync();
-                        const confidenceThreshold = 0.6;
+                        const confidenceThreshold = 0.5;
                         const currentPredictions = [];
                         const labels = ['OVERHEAD','ANGLED','BADCROP','STRAIGHT'];
 

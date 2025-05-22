@@ -365,7 +365,7 @@
                     try {
                         const outputTensor = tfModel.execute(inputTensor);
                         const outputData = outputTensor.dataSync();
-                        const confidenceThreshold = 0.5;
+                        const confidenceThreshold = 0.9;
                         const currentPredictions = [];
                         const labels = ['OVERHEAD','ANGLED','BADCROP','STRAIGHT'];
 

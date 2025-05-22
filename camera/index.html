@@ -151,14 +151,15 @@
                                 };
                             }
                         }
+
+                        const defaultSpec = specs?.find(s => s.label === null);
+                        if (defaultSpec && defaultSpec.instructions) {
+                            return {
+                                instructions: defaultSpec.instructions
+                            };
+                        }
                     }
 
-                    const defaultSpec = specs?.find(s => s.label === null);
-                    if (defaultSpec && defaultSpec.instructions) {
-                         return {
-                            instructions: defaultSpec.instructions
-                        };
-                    }
 
                     return null;
                 });
@@ -361,7 +362,7 @@
                     try {
                         const outputTensor = tfModel.execute(inputTensor);
                         const outputData = outputTensor.dataSync();
-                        const confidenceThreshold = 0.9;
+                        const confidenceThreshold = 0.8;
                         const currentPredictions = [];
                         const labels = ['OVERHEAD','ANGLED','BADCROP','STRAIGHT'];
 

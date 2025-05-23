@@ -1,0 +1,15 @@
+.monitor {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  border: 0;
+}
+
+.hole {
+  position: absolute;
+  box-shadow: 0 0 0 99999px rgba(0, 0, 0, .5);
+}
+
+.hole.error {
+  box-shadow: 0 0 0 99999px rgba(255, 0, 0, .5);
+}

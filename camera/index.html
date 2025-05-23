@@ -10,23 +10,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
     <link rel="manifest" href="manifest.json" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
-    <style>
-        .monitor {
-            position: absolute;
-            inset: 0;
-            margin: auto;
-            border: 0;
-        }
-
-        .hole {
-            position: absolute;
-            box-shadow: 0 0 0 99999px rgba(0, 0, 0, .5);
-        }
-
-        .hole.error {
-            box-shadow: 0 0 0 99999px rgba(255, 0, 0, .5);
-        }
-    </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body class="font-sans touch-none">
     <div id="app" class="max-h-screen h-screen">
@@ -42,35 +26,31 @@
             <div class="relative overflow-hidden h-2/5 bg-black" ref="cameraCntr">
                 <video class="monitor" ref="video" autoplay playsinline></video>
 
-                <div class="hole absolute inset-0" :style="maskMargins" :class="{'error': !isValidMask }" v-if="hasDetected">
+                <div class="hole absolute inset-0" :style="maskMargins" :class="{'error': !isValidMask }">
                 </div>
 
-                <div class="absolute flex mx-auto" :style="maskMargins" v-if="hasDetected">
-                    <div class="border border-gray-100 h-36 w-36 relative border-opacity-50 rounded-full m-auto">
-                        <div class="h-0.5 w-56 bg-white bg-opacity-50 absolute left-1/2 -ml-28" :style="{top: `${angleStylePct}%`}"></div>
-                    </div>
-
-                    <div class="absolute inset-0 flex items-center justify-center text-white text-sm font-black z-10">
+                <div class="absolute top-0 p-4 text-center text-white text-sm font-black z-10 left-0 right-0 flex justify-center items-center">
+                    <span>
+                        <i class="fa-solid fa-sun mr-1"></i>
+                        {{ exposure }}%&nbsp;
+                        <template v-if="exposure > 70">(Too Light)</template>
+                        <template v-else-if="exposure < 30">(Too Dark)</template>
+                    </span>
+                    <span class="ml-4" v-if="angle !== null" :class="{'text-red-500': !isValidAngle && hasDetected}">
+                        <i class="fa-solid fa-compass mr-1"></i>
                         {{ angle?.toFixed(0) }}°
-                    </div>
-                </div>
-
-                <div class="absolute top-0 p-4 text-center text-white text-sm font-black z-10 left-0 right-0">
-                    <i class="fa-solid fa-sun mr-1"></i>
-                    {{ exposure }}%&nbsp;
-                    <template v-if="exposure > 70">(Too Light)</template>
-                    <template v-else-if="exposure < 30">(Too Dark)</template>
-                </div>
-
-                <div class="absolute left-0 right-0 bottom-0 p-4 text-center text-white text-xs font-semibold z-10" v-if="!hasDetected">
-                    Detecting...
+                    </span>
                 </div>
             </div>
 
             <div class="flex-1 px-6 pt-6 pb-48 overflow-auto">
-                <div v-if="currentGuidelines" class="text-center">
-                    <h3 class="font-black mb-4 text-xl pb-2 border-b border-gray-100" v-if="currentGuidelines.title">{{ currentGuidelines.title }}</h3>
-                    <p class="my-2" v-for="instruction in currentGuidelines.instructions" :key="instruction">{{ instruction }}</p>
+                <div class="text-center"> <!-- Removed v-if="currentGuidelines" -->
+                    <h3 class="font-black mb-4 text-xl pb-2 border-b border-gray-100" v-if="!hasDetected">Detecting...</h3>
+                    <h3 class="font-black mb-4 text-xl pb-2 border-b border-gray-100" v-else-if="hasDetected && currentGuidelines && currentGuidelines.title">{{ currentGuidelines.title }}</h3>
+
+                    <div v-if="hasDetected && currentGuidelines">
+                        <p class="my-2" v-for="instruction in currentGuidelines.instructions" :key="instruction">{{ instruction }}</p>
+                    </div>
                 </div>
             </div>
 
@@ -90,407 +70,14 @@
         </div>
     </div>
 
-    <script>
-        const { createApp, computed, ref, onMounted } = Vue;
-        let track = null;
-        let tfModel = null;
-        let specs = [];
-
-        async function loadModel() {
-            try {
-                tfModel = await tf.loadGraphModel('tfjs_model/model.json');
-                console.log('TensorFlow.js model loaded successfully.');
-            } catch (error) {
-                console.error('Failed to load TensorFlow.js model:', error);
-            }
-        }
-
-        createApp({
-            setup() {
-                const video = ref(null);
-
-                const pane = ref('permissions');
-
-                const maskAspectRatio = ref("4/3");
-                const orientation = ref(screen.orientation.type);
-                const maskMargins = ref(null);
-                const cameraCntr = ref(null);
-                const predictedLabel = ref([]); // Initialize as an empty array
-
-                const showZoom = ref(false);
-                const minZoom = ref(0.5);
-                const maxZoom = ref(5);
-                const zoom = ref(0.5);
-                const exposure = ref(0);
-
-                const angle = ref(null);
-                const debugStr = ref(null);
-
-                const captureOffscreenCanvas = new OffscreenCanvas(1, 1); // Dedicated OffscreenCanvas for capture
-
-                const hasDetected = computed(() => predictedLabel.value.includes('STRAIGHT') || predictedLabel.value.includes('OVERHEAD') || predictedLabel.value.includes('ANGLED'));
-
-                const currentSpecAngle = computed(() => {
-                    if (specs && predictedLabel.value && predictedLabel.value.length > 0) {
-                        for (const label of predictedLabel.value) {
-                            const spec = specs.find(s => s.label === label);
-                            if (spec && spec.angle && typeof spec.angle.min === 'number' && typeof spec.angle.max === 'number') {
-                                return spec.angle;
-                            }
-                        }
-                    }
-
-                    return { min: 35, max: 45 }; // Hardcoded fallback
-                });
-
-                const currentGuidelines = computed(() => {
-                    if (specs && predictedLabel.value && predictedLabel.value.length > 0) {
-                        for (const label of predictedLabel.value) {
-                            const spec = specs.find(s => s.label === label);
-                            if (spec && spec.instructions) {
-                                return {
-                                    title: label,
-                                    instructions: spec.instructions
-                                };
-                            }
-                        }
-
-                        const defaultSpec = specs?.find(s => s.label === null);
-                        if (defaultSpec && defaultSpec.instructions) {
-                            return {
-                                instructions: defaultSpec.instructions
-                            };
-                        }
-                    }
-
-
-                    return null;
-                });
-
-                const calculateMaskMargins = () => {
-                    setTimeout(() => {
-                        const maskAspectRatioStr = maskAspectRatio.value.split('/').map(Number);
-                        const maskAspectRatioNum = maskAspectRatioStr[0] / maskAspectRatioStr[1];
-
-                        const viewportWidth = cameraCntr.value.clientWidth;
-                        const viewportHeight = cameraCntr.value.clientHeight;
-                        const viewportAspectRatio = viewportWidth / viewportHeight;
-
-                        let horizontalMargin = 0;
-                        let verticalMargin = 0;
-
-                        if (viewportAspectRatio > maskAspectRatioNum) {
-                            const maskHeight = viewportHeight * 0.8;
-                            const maskWidth = maskHeight * maskAspectRatioNum;
-                            horizontalMargin = (viewportWidth - maskWidth) / 2;
-                            verticalMargin = viewportHeight * 0.05;
-                        } else {
-                            const maskWidth = viewportWidth * 0.8;
-                            const maskHeight = maskWidth / maskAspectRatioNum;
-                            horizontalMargin = viewportWidth * 0.05;
-                            verticalMargin = (viewportHeight - maskHeight) / 2;
-                        }
-
-                        maskMargins.value = {
-                            top: `${verticalMargin}px`,
-                            bottom: `${verticalMargin}px`,
-                            left: `${horizontalMargin}px`,
-                            right: `${horizontalMargin}px`
-                        };
-
-                    }, 100)
-                }
-
-                const isValidAngle = computed(() => {
-                    if (angle.value === null) return true; // Consider valid if no angle data yet
-                    const { min, max } = currentSpecAngle.value;
-                    return angle.value >= min && angle.value <= max;
-                });
-
-                const angleStylePct = computed(() => {
-                    if (angle.value === null) return 0;
-                    const { min, max } = currentSpecAngle.value;
-
-                    if (angle.value < min) return 0;
-                    if (angle.value > max) return 100;
-                    if (max === min) return 50;
-                    return ((angle.value - min) / (max - min)) * 100;
-                });
-
-                const isValidMask = computed(() => {
-                    const isGoodAngle = isValidAngle.value;
-                    const isGoodExposure = exposure.value >= 30 && exposure.value <= 70;
-                    return isGoodAngle && isGoodExposure;
-                });
-
-                const onLoadStream = async () => {
-                    const mediaStream = await navigator.mediaDevices.getUserMedia({
-                        video: {
-                            facingMode: "environment",
-                            aspectRatio: { exact: 16/9 },
-                            width: { ideal: 5120/2 },
-                            height: { ideal: 2880/2 },
-                            focusMode: 'continuous',
-                            advanced: [{ zoom: Number(zoom.value) }]
-                        }
-                    });
-
-                    video.value.srcObject = mediaStream;
-                    video.value.addEventListener('loadedmetadata', () => {
-                        console.log("Video metadata loaded");
-                        processFrame();
-                    });
-                    track = mediaStream.getVideoTracks()[0];
-
-                    applyConstraints()
-                };
-
-                const captureImage = () => {
-                    if (!video.value || video.value.readyState < video.value.HAVE_METADATA || !video.value.videoWidth || !video.value.videoHeight) {
-                        console.error("Capture failed: Video element not ready or dimensions not available.", {
-                            videoReadyState: video.value?.readyState,
-                            videoWidth: video.value?.videoWidth,
-                            videoHeight: video.value?.videoHeight
-                        });
-                        alert("Video is not ready. Please wait a moment and try again.");
-                        return;
-                    }
-                    console.log("Attempting to capture image...");
-
-                    captureOffscreenCanvas.width = video.value.videoWidth;
-                    captureOffscreenCanvas.height = video.value.videoHeight;
-
-                    const ctx = captureOffscreenCanvas.getContext('2d', { alpha: false, willReadFrequently: true });
-                    if (!ctx) {
-                        console.error("Capture failed: Could not get 2D context for capture canvas.");
-                        alert("Failed to prepare image for capture. Please try again.");
-                        return;
-                    }
-
-                    ctx.drawImage(video.value, 0, 0, video.value.videoWidth, video.value.videoHeight);
-                    console.log(`Image drawn to capture canvas (${video.value.videoWidth}x${video.value.videoHeight}).`);
-
-                    try {
-                        const imageData = captureOffscreenCanvas.toDataURL('image/jpeg', 1.0);
-                        // Check if imageData is valid (not empty or just "data:,")
-                        if (!imageData || imageData === "data:," || imageData.length < 100) { // Basic check for valid data URL
-                             console.error("Capture failed: toDataURL returned empty or invalid data.", { dataUrlStart: imageData?.substring(0,100) });
-                             alert("Failed to generate image data. The canvas might be blank or an error occurred.");
-                             return;
-                        }
-                        console.log("Image data URL created (first 100 chars):", imageData.substring(0,100));
-
-                        const a = document.createElement('a');
-                        a.href = imageData;
-                        const timestamp = new Date().toISOString().replace(/[:.]/g, '-'); // Filesystem-friendly timestamp
-                        a.download = `capture-${timestamp}.jpg`;
-                        console.log("Triggering download for:", a.download);
-
-                        document.body.appendChild(a); // Append to body for better compatibility
-                        a.click();
-                        document.body.removeChild(a); // Clean up the appended element
-
-                        console.log("Download triggered.");
-                    } catch (e) {
-                        console.error("Error during image data generation or download initiation:", e);
-                        alert(`An error occurred while capturing the image: ${e.message}`);
-                    }
-                };
-
-                const calculateExposure = (frameData) => {
-                    const histogram = new Array(256).fill(0);
-                    for (let i = 0; i < frameData.length; i += 4) {
-                        const grayscale = Math.round(0.299 * frameData[i] + 0.587 * frameData[i + 1] + 0.114 * frameData[i + 2]);
-                        histogram[grayscale]++;
-                    }
-
-                    let totalBrightness = 0;
-                    for (let i = 0; i < histogram.length; i++) totalBrightness += histogram[i] * i;
-
-                    const totalPixels = frameData.length / 4;
-                    const averageBrightness = totalBrightness / totalPixels;
-
-                    return Math.round((averageBrightness / 255) * 100);
-                };
-
-                let frameSkipCounter = 0;
-
-                const frameProcessor = {
-                    lastProcessedTime: 0,
-                    processingInterval: 100,
-                    scaleRatio: 4,
-                    offscreenCanvas: new OffscreenCanvas(1, 1),
-                    ctx: null,
-                    aiCanvas: new OffscreenCanvas(1, 1),
-                    aiCtx: null,
-                    modelInputShape: null
-                };
-
-                const throttledProcessFrame = _.throttle(async () => {
-                    if (!video.value || video.value.readyState < video.value.HAVE_METADATA || !tfModel) return;
-
-                    if (!frameProcessor.ctx) {
-                        frameProcessor.ctx = frameProcessor.offscreenCanvas.getContext('2d', { alpha: false, willReadFrequently: true });
-                    }
-                    const scaledWidth = Math.floor(video.value.videoWidth / frameProcessor.scaleRatio);
-                    const scaledHeight = Math.floor(video.value.videoHeight / frameProcessor.scaleRatio);
-                    if (frameProcessor.offscreenCanvas.width !== scaledWidth || frameProcessor.offscreenCanvas.height !== scaledHeight) {
-                        frameProcessor.offscreenCanvas.width = scaledWidth;
-                        frameProcessor.offscreenCanvas.height = scaledHeight;
-                    }
-                    frameProcessor.ctx.drawImage(video.value, 0, 0, scaledWidth, scaledHeight);
-                    const imageData = frameProcessor.ctx.getImageData(0, 0, scaledWidth, scaledHeight);
-                    exposure.value = calculateExposure(imageData.data);
-
-                    if (!frameProcessor.modelInputShape) {
-                        frameProcessor.modelInputShape = tfModel.inputs[0].shape.slice(1);
-                        console.log("Model Input Shape:", frameProcessor.modelInputShape);
-                        frameProcessor.aiCanvas.width = frameProcessor.modelInputShape[1];
-                        frameProcessor.aiCanvas.height = frameProcessor.modelInputShape[0];
-                        frameProcessor.aiCtx = frameProcessor.aiCanvas.getContext('2d', { alpha: false, willReadFrequently: false });
-                    }
-
-                    const [inputHeight, inputWidth] = frameProcessor.modelInputShape;
-
-                    frameProcessor.aiCtx.drawImage(video.value, 0, 0, inputWidth, inputHeight);
-
-                    const frameImageData = frameProcessor.aiCtx.getImageData(0, 0, inputWidth, inputHeight);
-
-                    const inputTensor = tf.tidy(() => {
-                        const tensor = tf.browser.fromPixels(frameImageData);
-                        const floatTensor = tensor.cast('float32');
-                        return floatTensor.expandDims(0);
-                    });
-
-                    try {
-                        const outputTensor = tfModel.execute(inputTensor);
-                        const outputData = outputTensor.dataSync();
-                        const confidenceThreshold = 0.9;
-                        const currentPredictions = [];
-                        const labels = ['OVERHEAD','ANGLED','BADCROP','STRAIGHT'];
-
-                        if (outputData.length > 0) {
-                            for (let i = 0; i < outputData.length; i++) {
-                                if (outputData[i] > confidenceThreshold) {
-                                    const label = labels[i];
-
-                                    const spec = specs.find(s => s.label === label);
-                                    if (spec && spec.angle) {
-                                        if (spec.angle.min > angle.value || spec.angle.max < angle.value) currentPredictions.push(label);
-                                    } else {
-                                        currentPredictions.push(label);
-                                    }
-                                }
-                            }
-
-                            if (exposure.value < 30) currentPredictions.push('TOODARK')
-                            else if (exposure.value > 70) currentPredictions.push('TOOLIGHT');
-                        }
-
-                        predictedLabel.value = currentPredictions;
-
-                        tf.dispose(outputTensor);
-                    } catch (error) {
-                        console.error("Error during model prediction:", error);
-                    } finally {
-                         tf.dispose(inputTensor);
-                    }
-
-
-                }, 200);
-
-                const processFrame = () => {
-                    throttledProcessFrame();
-                    requestAnimationFrame(processFrame);
-                };
-
-                const applyConstraints = (event, dimension, val) => {
-                    if (dimension === 'zoom') zoom.value = val;
-
-                    if (dimension) console.log(`apply: ${dimension}=${val}`)
-
-                    track?.applyConstraints({ advanced: [{ zoom: Number(zoom.value) }] });
-                }
-
-                const onToggleMask = () => {
-                    switch (maskAspectRatio.value) {
-                        case "4/3":
-                            maskAspectRatio.value = "5/4";
-                            break;
-                        case "5/4":
-                            maskAspectRatio.value = "16/9";
-                            break;
-                        case "16/9":
-                            maskAspectRatio.value = "4/3";
-                            break;
-                        default:
-                            maskAspectRatio.value = "4/3";
-                    }
-
-                    calculateMaskMargins();
-                }
-
-                const onRequestPermissions = async () => {
-                    try {
-                        if (DeviceMotionEvent?.requestPermission) await DeviceMotionEvent.requestPermission();
-
-                        window.addEventListener("deviceorientation", (event) => {
-                            if (event.beta !== null) angle.value = 90 - event.beta;
-                        });
-
-                        // Fetch specs.json
-                        try {
-                            const response = await fetch('specs.json');
-                            specs = await response.json();
-                            console.log('specs.json loaded successfully:', specs);
-                        } catch (error) {
-                            console.error('Failed to load specs.json:', error);
-                            // Keep default UberEats guidelines if specs.json fails to load
-                        }
-
-                        pane.value = 'camera';
-                        await loadModel();
-
-                        onLoadStream();
-                        calculateMaskMargins();
-                    } catch (error) {
-                        console.error("Permission request failed:", error);
-                        alert("Camera or motion sensor permissions are required to use this feature.");
-                    }
-                }
-
-                return {
-                    video,
-                    captureImage,
-                    angle,
-                    debugStr,
-
-                    showZoom,
-                    minZoom,
-                    maxZoom,
-                    zoom,
-
-                    maskMargins,
-                    maskAspectRatio,
-                    onToggleMask,
-                    exposure,
-
-                    isValidAngle,
-                    isValidMask,
-                    angleStylePct,
-
-                    pane,
-                    cameraCntr,
-                    predictedLabel,
-                    currentGuidelines,
-
-                    onRequestPermissions,
-                    hasDetected,
-
-                    applyConstraints
-                };
-            }
-        }).mount('#app');
-    </script>
+    <script src="vue.global.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+    <!-- New script files -->
+    <script src="model.js"></script>
+    <script src="image-processor.js"></script>
+    <!-- Main app script -->
+    <script src="app.js"></script>
 </body>
 </html>

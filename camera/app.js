@@ -114,7 +114,7 @@ createApp({
       track = mediaStream.getVideoTracks()[0];
     };
 
-    const captureImage = () => {
+    const captureImage = async () => { // Make the function async
       if (!video.value || video.value.readyState < video.value.HAVE_METADATA || !video.value.videoWidth || !video.value.videoHeight) {
         alert("Video is not ready. Please wait a moment and try again.");
         return;
@@ -132,9 +132,21 @@ createApp({
       ctx.drawImage(video.value, 0, 0, video.value.videoWidth, video.value.videoHeight);
 
       try {
-        const imageData = captureOffscreenCanvas.toDataURL('image/jpeg', 1.0);
+        const blob = await captureOffscreenCanvas.convertToBlob({ type: 'image/jpeg', quality: 1.0 });
+        if (!blob) {
+          alert("Failed to generate image data (blob is null). Please try again.");
+          return;
+        }
+
+        const imageData = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+
         if (!imageData || imageData === "data:," || imageData.length < 100) {
-          alert("Failed to generate image data. The canvas might be blank or an error occurred.");
+          alert("Failed to generate image data from blob. The canvas might be blank or an error occurred.");
           return;
         }
 
@@ -147,6 +159,7 @@ createApp({
         a.click();
         document.body.removeChild(a);
       } catch (e) {
+        console.error("Error during image capture:", e); // Log the full error for better debugging
         alert(`An error occurred while capturing the image: ${e.message}`);
       }
     };

@@ -103,8 +103,9 @@ createApp({
         video: {
           facingMode: "environment",
           aspectRatio: { exact: 16 / 9 },
-          width: { ideal: 5120 / 2 },
-          height: { ideal: 2880 / 2 },
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
+          zoom: { ideal: 1 },
           focusMode: 'continuous'
         }
       });

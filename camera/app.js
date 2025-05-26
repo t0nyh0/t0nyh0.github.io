@@ -6,8 +6,6 @@ createApp({
   setup() {
     const video = ref(null);
     const pane = ref('permissions');
-    const maskAspectRatio = ref("16/9");
-    const maskMargins = ref(null);
     const cameraCntr = ref(null);
     const predictedLabel = ref([]);
     const exposure = ref(0);
@@ -51,49 +49,13 @@ createApp({
       return null;
     });
 
-    let maskTimer = null;
-    const calculateMaskMargins = () => {
-      if (maskTimer) clearTimeout(maskTimer);
-
-      maskTimer = setTimeout(() => {
-        const maskAspectRatioStr = maskAspectRatio.value.split('/').map(Number);
-        const maskAspectRatioNum = maskAspectRatioStr[0] / maskAspectRatioStr[1];
-        const viewportWidth = cameraCntr.value.clientWidth;
-        const viewportHeight = cameraCntr.value.clientHeight;
-        const viewportAspectRatio = viewportWidth / viewportHeight;
-        let horizontalMargin = 0;
-        let verticalMargin = 0;
-
-        if (viewportAspectRatio > maskAspectRatioNum) {
-          const maskHeight = viewportHeight * 0.8;
-          const maskWidth = maskHeight * maskAspectRatioNum;
-          horizontalMargin = (viewportWidth - maskWidth) / 2;
-          verticalMargin = viewportHeight * 0.05;
-        } else {
-          const maskWidth = viewportWidth * 0.8;
-          const maskHeight = maskWidth / maskAspectRatioNum;
-          horizontalMargin = viewportWidth * 0.05;
-          verticalMargin = (viewportHeight - maskHeight) / 2;
-        }
-
-        maskMargins.value = {
-          top: `${verticalMargin}px`,
-          bottom: `${verticalMargin}px`,
-          left: `${horizontalMargin}px`,
-          right: `${horizontalMargin}px`
-        };
-
-        maskTimer = null;
-      }, 100);
-    };
-
     const isValidAngle = computed(() => {
       if (angle.value === null) return true;
       const { min, max } = currentSpecAngle.value;
       return angle.value >= min && angle.value <= max;
     });
 
-    const isValidMask = computed(() => {
+    const isValid = computed(() => {
       const isGoodExposure = exposure.value >= 30 && exposure.value <= 70;
       return isValidAngle.value && isGoodExposure;
     });
@@ -120,27 +82,14 @@ createApp({
     };
 
     const calculateVisibleArea = () => {
-      const maskAspectRatioStr = maskAspectRatio.value.split('/').map(Number);
-      const maskAspectRatioNum = maskAspectRatioStr[0] / maskAspectRatioStr[1];
       const viewportWidth = cameraCntr.value.clientWidth;
       const viewportHeight = cameraCntr.value.clientHeight;
-      const viewportAspectRatio = viewportWidth / viewportHeight;
-
-      let visibleWidth, visibleHeight;
-
-      if (viewportAspectRatio > maskAspectRatioNum) {
-        visibleHeight = viewportHeight * 0.8;
-        visibleWidth = visibleHeight * maskAspectRatioNum;
-      } else {
-        visibleWidth = viewportWidth * 0.8;
-        visibleHeight = visibleWidth / maskAspectRatioNum;
-      }
 
       return {
-        width: visibleWidth,
-        height: visibleHeight,
-        offsetX: (viewportWidth - visibleWidth) / 2,
-        offsetY: (viewportHeight - visibleHeight) / 2
+        width: viewportWidth * 0.8,
+        height: viewportHeight * 0.8,
+        offsetX: viewportWidth * 0.1,
+        offsetY: viewportHeight * 0.1
       };
     };
 
@@ -208,23 +157,6 @@ createApp({
       }
     };
 
-    const onToggleMask = () => {
-      switch (maskAspectRatio.value) {
-        case "4/3":
-          maskAspectRatio.value = "5/4";
-          break;
-        case "5/4":
-          maskAspectRatio.value = "16/9";
-          break;
-        case "16/9":
-          maskAspectRatio.value = "4/3";
-          break;
-        default:
-          maskAspectRatio.value = "4/3";
-      }
-      calculateMaskMargins();
-    };
-
     const onRequestPermissions = async () => {
       try {
         if (DeviceMotionEvent?.requestPermission) await DeviceMotionEvent.requestPermission();
@@ -236,7 +168,7 @@ createApp({
           const response = await fetch('specs.json');
           specs = await response.json();
         } catch (error) {
-          console.error('Failed to load specs.json:', error); // Keep this error for now
+          console.error('Failed to load specs.json:', error);
         }
 
         await loadModel();
@@ -251,7 +183,6 @@ createApp({
 
         pane.value = 'camera';
         onLoadStream();
-        calculateMaskMargins();
       } catch (error) {
         alert("Camera or motion sensor permissions are required to use this feature.");
       }
@@ -261,12 +192,9 @@ createApp({
       video,
       captureImage,
       angle,
-      maskMargins,
-      maskAspectRatio,
-      onToggleMask,
       exposure,
       isValidAngle,
-      isValidMask,
+      isValid,
       pane,
       cameraCntr,
       predictedLabel,

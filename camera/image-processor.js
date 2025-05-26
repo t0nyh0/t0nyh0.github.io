@@ -14,7 +14,7 @@ function calculateExposure(frameData) {
 }
 
 function initializeFrameProcessor(vueRefs, externalDeps) {
-  const { video, exposure, predictedLabel } = vueRefs;
+  const { video, exposure, predictedLabel, maskMargins } = vueRefs;
   const { getSpecs, getTfModel, lodash } = externalDeps;
 
   const frameProcessorInternal = {
@@ -40,14 +40,23 @@ function initializeFrameProcessor(vueRefs, externalDeps) {
     if (!frameProcessorInternal.ctx) {
       frameProcessorInternal.ctx = frameProcessorInternal.offscreenCanvas.getContext('2d', { alpha: false, willReadFrequently: true });
     }
-    const scaledWidth = Math.floor(video.value.videoWidth / frameProcessorInternal.scaleRatio);
-    const scaledHeight = Math.floor(video.value.videoHeight / frameProcessorInternal.scaleRatio);
+    const scaledWidth = Math.floor((video.value.videoWidth - parseFloat(maskMargins.value.left) - parseFloat(maskMargins.value.right)) / frameProcessorInternal.scaleRatio);
+    const scaledHeight = Math.floor((video.value.videoHeight - parseFloat(maskMargins.value.top) - parseFloat(maskMargins.value.bottom)) / frameProcessorInternal.scaleRatio);
 
     if (frameProcessorInternal.offscreenCanvas.width !== scaledWidth || frameProcessorInternal.offscreenCanvas.height !== scaledHeight) {
       frameProcessorInternal.offscreenCanvas.width = scaledWidth;
       frameProcessorInternal.offscreenCanvas.height = scaledHeight;
     }
-    frameProcessorInternal.ctx.drawImage(video.value, 0, 0, scaledWidth, scaledHeight);
+
+    const cropX = parseFloat(maskMargins.value.left);
+    const cropY = parseFloat(maskMargins.value.top);
+
+    frameProcessorInternal.ctx.drawImage(
+      video.value,
+      cropX, cropY, scaledWidth * frameProcessorInternal.scaleRatio, scaledHeight * frameProcessorInternal.scaleRatio, // Source rectangle
+      0, 0, scaledWidth, scaledHeight // Destination rectangle
+    );
+
     const imageDataForExposure = frameProcessorInternal.ctx.getImageData(0, 0, scaledWidth, scaledHeight);
     exposure.value = calculateExposure(imageDataForExposure.data);
 
@@ -59,7 +68,12 @@ function initializeFrameProcessor(vueRefs, externalDeps) {
     }
 
     const [inputHeight, inputWidth] = frameProcessorInternal.modelInputShape;
-    frameProcessorInternal.aiCtx.drawImage(video.value, 0, 0, inputWidth, inputHeight);
+    frameProcessorInternal.aiCtx.drawImage(
+      frameProcessorInternal.offscreenCanvas,
+      0, 0, scaledWidth, scaledHeight, // Source rectangle
+      0, 0, inputWidth, inputHeight // Destination rectangle
+    );
+
     const frameImageDataForAI = frameProcessorInternal.aiCtx.getImageData(0, 0, inputWidth, inputHeight);
 
     const inputTensor = tf.tidy(() => {

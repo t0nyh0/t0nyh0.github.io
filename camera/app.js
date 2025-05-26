@@ -118,7 +118,7 @@ createApp({
       track = mediaStream.getVideoTracks()[0];
     };
 
-    const captureImage = async () => { // Make the function async
+    const captureImage = async () => {
       if (!video.value || video.value.readyState < video.value.HAVE_METADATA || !video.value.videoWidth || !video.value.videoHeight) {
         alert("Video is not ready. Please wait a moment and try again.");
         return;
@@ -135,8 +135,24 @@ createApp({
 
       ctx.drawImage(video.value, 0, 0, video.value.videoWidth, video.value.videoHeight);
 
+      // Calculate the visible area based on maskMargins
+      const { top, bottom, left, right } = maskMargins.value;
+      const cropX = parseFloat(left);
+      const cropY = parseFloat(top);
+      const cropWidth = video.value.videoWidth - cropX - parseFloat(right);
+      const cropHeight = video.value.videoHeight - cropY - parseFloat(bottom);
+
+      // Extract the visible portion of the canvas
+      const croppedCanvas = new OffscreenCanvas(cropWidth, cropHeight);
+      const croppedCtx = croppedCanvas.getContext('2d');
+      croppedCtx.drawImage(
+        captureOffscreenCanvas,
+        cropX, cropY, cropWidth, cropHeight, // Source rectangle
+        0, 0, cropWidth, cropHeight         // Destination rectangle
+      );
+
       try {
-        const blob = await captureOffscreenCanvas.convertToBlob({ type: 'image/jpeg', quality: 1.0 });
+        const blob = await croppedCanvas.convertToBlob({ type: 'image/jpeg', quality: 1.0 });
         if (!blob) {
           alert("Failed to generate image data (blob is null). Please try again.");
           return;
@@ -163,7 +179,7 @@ createApp({
         a.click();
         document.body.removeChild(a);
       } catch (e) {
-        console.error("Error during image capture:", e); // Log the full error for better debugging
+        console.error("Error during image capture:", e);
         alert(`An error occurred while capturing the image: ${e.message}`);
       }
     };

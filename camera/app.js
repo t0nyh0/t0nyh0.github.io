@@ -6,7 +6,7 @@ createApp({
   setup() {
     const video = ref(null);
     const pane = ref('permissions');
-    const maskAspectRatio = ref("4/3");
+    const maskAspectRatio = ref("16/9");
     const maskMargins = ref(null);
     const cameraCntr = ref(null);
     const predictedLabel = ref([]);
@@ -118,6 +118,31 @@ createApp({
       track = mediaStream.getVideoTracks()[0];
     };
 
+    const calculateVisibleArea = () => {
+      const maskAspectRatioStr = maskAspectRatio.value.split('/').map(Number);
+      const maskAspectRatioNum = maskAspectRatioStr[0] / maskAspectRatioStr[1];
+      const viewportWidth = cameraCntr.value.clientWidth;
+      const viewportHeight = cameraCntr.value.clientHeight;
+      const viewportAspectRatio = viewportWidth / viewportHeight;
+
+      let visibleWidth, visibleHeight;
+
+      if (viewportAspectRatio > maskAspectRatioNum) {
+        visibleHeight = viewportHeight * 0.8;
+        visibleWidth = visibleHeight * maskAspectRatioNum;
+      } else {
+        visibleWidth = viewportWidth * 0.8;
+        visibleHeight = visibleWidth / maskAspectRatioNum;
+      }
+
+      return {
+        width: visibleWidth,
+        height: visibleHeight,
+        offsetX: (viewportWidth - visibleWidth) / 2,
+        offsetY: (viewportHeight - visibleHeight) / 2
+      };
+    };
+
     const captureImage = async () => {
       if (!video.value || video.value.readyState < video.value.HAVE_METADATA || !video.value.videoWidth || !video.value.videoHeight) {
         alert("Video is not ready. Please wait a moment and try again.");
@@ -135,14 +160,12 @@ createApp({
 
       ctx.drawImage(video.value, 0, 0, video.value.videoWidth, video.value.videoHeight);
 
-      // Calculate the visible area based on maskMargins
-      const { top, bottom, left, right } = maskMargins.value;
-      const cropX = parseFloat(left);
-      const cropY = parseFloat(top);
-      const cropWidth = video.value.videoWidth - cropX - parseFloat(right);
-      const cropHeight = video.value.videoHeight - cropY - parseFloat(bottom);
+      const { width, height, offsetX, offsetY } = calculateVisibleArea();
+      const cropX = (offsetX / cameraCntr.value.clientWidth) * video.value.videoWidth;
+      const cropY = (offsetY / cameraCntr.value.clientHeight) * video.value.videoHeight;
+      const cropWidth = (width / cameraCntr.value.clientWidth) * video.value.videoWidth;
+      const cropHeight = (height / cameraCntr.value.clientHeight) * video.value.videoHeight;
 
-      // Extract the visible portion of the canvas
       const croppedCanvas = new OffscreenCanvas(cropWidth, cropHeight);
       const croppedCtx = croppedCanvas.getContext('2d');
       croppedCtx.drawImage(

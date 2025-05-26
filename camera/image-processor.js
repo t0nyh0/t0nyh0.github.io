@@ -40,16 +40,17 @@ function initializeFrameProcessor(vueRefs, externalDeps) {
     if (!frameProcessorInternal.ctx) {
       frameProcessorInternal.ctx = frameProcessorInternal.offscreenCanvas.getContext('2d', { alpha: false, willReadFrequently: true });
     }
-    const scaledWidth = Math.floor((video.value.videoWidth - parseFloat(maskMargins.value.left) - parseFloat(maskMargins.value.right)) / frameProcessorInternal.scaleRatio);
-    const scaledHeight = Math.floor((video.value.videoHeight - parseFloat(maskMargins.value.top) - parseFloat(maskMargins.value.bottom)) / frameProcessorInternal.scaleRatio);
+    const scaledWidth = Math.floor((video.value.videoWidth * (calculateVisibleArea().width / cameraCntr.value.clientWidth)) / frameProcessorInternal.scaleRatio);
+    const scaledHeight = Math.floor((video.value.videoHeight * (calculateVisibleArea().height / cameraCntr.value.clientHeight)) / frameProcessorInternal.scaleRatio);
 
     if (frameProcessorInternal.offscreenCanvas.width !== scaledWidth || frameProcessorInternal.offscreenCanvas.height !== scaledHeight) {
       frameProcessorInternal.offscreenCanvas.width = scaledWidth;
       frameProcessorInternal.offscreenCanvas.height = scaledHeight;
     }
 
-    const cropX = parseFloat(maskMargins.value.left);
-    const cropY = parseFloat(maskMargins.value.top);
+    const { offsetX, offsetY } = calculateVisibleArea();
+    const cropX = (offsetX / cameraCntr.value.clientWidth) * video.value.videoWidth;
+    const cropY = (offsetY / cameraCntr.value.clientHeight) * video.value.videoHeight;
 
     frameProcessorInternal.ctx.drawImage(
       video.value,

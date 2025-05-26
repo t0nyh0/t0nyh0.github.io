@@ -72,7 +72,7 @@ function initializeFrameProcessor(vueRefs, externalDeps) {
     try {
       const outputTensor = currentTfModel.execute(inputTensor);
       const outputData = outputTensor.dataSync();
-      const confidenceThreshold = 0.95;
+      const confidenceThreshold = 0.90;
       const labels = ['OVERHEAD', 'ANGLED', 'BADCROP', 'STRAIGHT']; // Make sure this matches dict.txt
 
       if (outputData.length > 0) {

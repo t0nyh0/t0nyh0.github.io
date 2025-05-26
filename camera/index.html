@@ -29,14 +29,14 @@
                 <div class="hole absolute inset-0" :style="maskMargins" :class="{'error': !isValidMask }">
                 </div>
 
-                <div class="absolute top-0 p-4 text-center text-white text-sm font-black z-10 left-0 right-0 flex justify-center items-center">
+                <div class="absolute top-0 p-2 text-center text-white text-sm font-black z-10 left-0 right-0 flex justify-center items-center">
                     <span>
                         <i class="fa-solid fa-sun mr-1"></i>
                         {{ exposure }}%&nbsp;
                         <template v-if="exposure > 70">(Too Light)</template>
                         <template v-else-if="exposure < 30">(Too Dark)</template>
                     </span>
-                    <span class="ml-4" v-if="angle !== null" :class="{'text-red-500': !isValidAngle && hasDetected}">
+                    <span class="ml-4" v-if="angle !== null" :class="{'text-red-100': !isValidAngle}">
                         <i class="fa-solid fa-compass mr-1"></i>
                         {{ angle?.toFixed(0) }}°
                     </span>

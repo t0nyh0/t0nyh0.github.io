@@ -27,7 +27,7 @@ createApp({
           }
         }
       }
-      return { min: 35, max: 45 };
+      return { min: 40, max: 50 };
     });
 
     const currentGuidelines = computed(() => {
@@ -51,8 +51,11 @@ createApp({
       return null;
     });
 
+    let maskTimer = null;
     const calculateMaskMargins = () => {
-      setTimeout(() => {
+      if (maskTimer) clearTimeout(maskTimer);
+
+      maskTimer = setTimeout(() => {
         const maskAspectRatioStr = maskAspectRatio.value.split('/').map(Number);
         const maskAspectRatioNum = maskAspectRatioStr[0] / maskAspectRatioStr[1];
         const viewportWidth = cameraCntr.value.clientWidth;
@@ -79,6 +82,8 @@ createApp({
           left: `${horizontalMargin}px`,
           right: `${horizontalMargin}px`
         };
+
+        maskTimer = null;
       }, 100);
     };
 
@@ -89,9 +94,8 @@ createApp({
     });
 
     const isValidMask = computed(() => {
-      const isGoodAngle = isValidAngle.value;
       const isGoodExposure = exposure.value >= 30 && exposure.value <= 70;
-      return isGoodAngle && isGoodExposure;
+      return isValidAngle.value && isGoodExposure;
     });
 
     const onLoadStream = async () => {

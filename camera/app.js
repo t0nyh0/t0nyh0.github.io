@@ -121,7 +121,7 @@ createApp({
 
       ctx.drawImage(video.value, 0, 0, video.value.videoWidth, video.value.videoHeight);
 
-      // Calculate centered crop based on browser width and 2/5 of screen height
+      // Calculate centered crop based on browser width and 3/5 of screen height
       const viewportWidth = window.innerWidth;
       const viewportHeight = window.innerHeight;
       const targetViewHeight = viewportHeight * (2 / 5);

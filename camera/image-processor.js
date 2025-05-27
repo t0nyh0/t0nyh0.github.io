@@ -59,7 +59,7 @@ function initializeFrameProcessor(vueRefs, externalDeps) {
     }
 
     const [inputHeight, inputWidth] = frameProcessorInternal.modelInputShape;
-    // Calculate centered 16:9 crop from the video feed
+
     const videoElement = video.value;
     const vidWidth = videoElement.videoWidth;
     const vidHeight = videoElement.videoHeight;
@@ -67,7 +67,12 @@ function initializeFrameProcessor(vueRefs, externalDeps) {
     let sx = 0, sy = 0, sWidth = 0, sHeight = 0; // Initialize crop parameters
 
     if (vidWidth > 0 && vidHeight > 0) {
-      const targetAspectRatio = 16 / 9;
+      // Calculate aspect ratio based on browser width and 2/5 of screen height
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      const targetViewHeight = viewportHeight * (2 / 5);
+      const targetAspectRatio = viewportWidth / targetViewHeight;
+
       const currentAspectRatio = vidWidth / vidHeight;
 
       if (currentAspectRatio > targetAspectRatio) {
@@ -92,6 +97,12 @@ function initializeFrameProcessor(vueRefs, externalDeps) {
       // and ensure they are not negative.
       sWidth = Math.max(0, Math.min(sWidth, vidWidth - sx));
       sHeight = Math.max(0, Math.min(sHeight, vidHeight - sy));
+
+      // If sWidth or sHeight ended up as 0 (e.g. if video dimensions were 0 initially)
+      // we will fill with black later, so no need to adjust them here for drawing.
+      if (sWidth === 0 || sHeight === 0) {
+        console.warn('Calculated crop dimensions for AI are zero.');
+      }
     }
 
     // Ensure aiCtx is available (it should be if modelInputShape is set)

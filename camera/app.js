@@ -61,12 +61,20 @@ createApp({
     });
 
     const onLoadStream = async () => {
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      const targetHeight = viewportHeight * (2 / 5);
+      const targetAspectRatio = viewportWidth / targetHeight;
+
+      const idealCameraHeight = 1080; // Aim for 1080p height
+      const idealCameraWidth = Math.round(idealCameraHeight * targetAspectRatio);
+
       const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: "environment",
-          aspectRatio: { exact: 9 / 16 },
-          width: { ideal: 1920 },
-          height: { ideal: 1080 },
+          aspectRatio: { exact: targetAspectRatio },
+          width: { ideal: idealCameraWidth },
+          height: { ideal: idealCameraHeight },
           advanced: [{
             zoom: 1
           }],
@@ -112,19 +120,23 @@ createApp({
 
       ctx.drawImage(video.value, 0, 0, video.value.videoWidth, video.value.videoHeight);
 
-      // Calculate centered 16:9 crop
+      // Calculate centered crop based on browser width and 2/5 of screen height
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      const targetViewHeight = viewportHeight * (2 / 5);
+      const targetAspectRatio = viewportWidth / targetViewHeight;
+
       const vidWidth = video.value.videoWidth;
       const vidHeight = video.value.videoHeight;
       let sx = 0, sy = 0, sWidth = vidWidth, sHeight = vidHeight;
-      const targetAspectRatio = 16 / 9;
       const currentAspectRatio = vidWidth / vidHeight;
 
       if (currentAspectRatio > targetAspectRatio) {
-        // Video is wider than 16:9. Crop sides.
+        // Video is wider than target aspect ratio. Crop sides.
         sWidth = Math.round(vidHeight * targetAspectRatio);
         sx = Math.round((vidWidth - sWidth) / 2);
       } else if (currentAspectRatio < targetAspectRatio) {
-        // Video is taller than 16:9. Crop top/bottom.
+        // Video is taller than target aspect ratio. Crop top/bottom.
         sHeight = Math.round(vidWidth / targetAspectRatio);
         sy = Math.round((vidHeight - sHeight) / 2);
       }
@@ -134,6 +146,15 @@ createApp({
       sWidth = Math.max(0, Math.min(sWidth, vidWidth - sx));
       sHeight = Math.max(0, Math.min(sHeight, vidHeight - sy));
 
+      // If sWidth or sHeight ended up as 0 (e.g. if video dimensions were 0 initially)
+      // attempt to use the full video dimensions, or default to a small canvas to avoid errors.
+      if (sWidth === 0 || sHeight === 0) {
+        console.warn('Calculated crop dimensions are zero. Using full video frame for capture or defaulting to small canvas.');
+        sWidth = vidWidth > 0 ? vidWidth : 100; // Default to 100 if vidWidth is 0
+        sHeight = vidHeight > 0 ? vidHeight : 100; // Default to 100 if vidHeight is 0
+        sx = 0;
+        sy = 0;
+      }
 
       const croppedCanvas = new OffscreenCanvas(sWidth, sHeight);
       const croppedCtx = croppedCanvas.getContext('2d');

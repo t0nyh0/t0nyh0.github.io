@@ -59,7 +59,58 @@ function initializeFrameProcessor(vueRefs, externalDeps) {
     }
 
     const [inputHeight, inputWidth] = frameProcessorInternal.modelInputShape;
-    frameProcessorInternal.aiCtx.drawImage(video.value, 0, 0, inputWidth, inputHeight);
+    // Calculate centered 16:9 crop from the video feed
+    const videoElement = video.value;
+    const vidWidth = videoElement.videoWidth;
+    const vidHeight = videoElement.videoHeight;
+
+    let sx = 0, sy = 0, sWidth = 0, sHeight = 0; // Initialize crop parameters
+
+    if (vidWidth > 0 && vidHeight > 0) {
+      const targetAspectRatio = 16 / 9;
+      const currentAspectRatio = vidWidth / vidHeight;
+
+      if (currentAspectRatio > targetAspectRatio) {
+        // Video is wider than 16:9. Crop sides. Use full height.
+        sHeight = vidHeight;
+        sWidth = Math.round(sHeight * targetAspectRatio);
+        sx = Math.round((vidWidth - sWidth) / 2);
+        sy = 0;
+      } else { // currentAspectRatio <= targetAspectRatio
+        // Video is taller than 16:9 or is exactly 16:9. Crop top/bottom. Use full width.
+        sWidth = vidWidth;
+        sHeight = Math.round(sWidth / targetAspectRatio);
+        sx = 0;
+        sy = Math.round((vidHeight - sHeight) / 2);
+      }
+
+      // Clamp coordinates to be non-negative
+      sx = Math.max(0, sx);
+      sy = Math.max(0, sy);
+
+      // Adjust sWidth and sHeight to fit within the video frame from sx, sy,
+      // and ensure they are not negative.
+      sWidth = Math.max(0, Math.min(sWidth, vidWidth - sx));
+      sHeight = Math.max(0, Math.min(sHeight, vidHeight - sy));
+    }
+
+    // Ensure aiCtx is available (it should be if modelInputShape is set)
+    if (frameProcessorInternal.aiCtx) {
+      if (sWidth > 0 && sHeight > 0) {
+        // Draw the cropped and centered portion of the video onto the aiCanvas,
+        // scaling it to the model's input dimensions.
+        frameProcessorInternal.aiCtx.drawImage(
+          videoElement,
+          sx, sy, sWidth, sHeight,       // Source rectangle from video
+          0, 0, inputWidth, inputHeight  // Destination rectangle on aiCanvas
+        );
+      } else {
+        // If calculated crop dimensions are invalid (e.g., video dimensions are zero, or calculation error),
+        // fill the AI canvas with black to provide a consistent input to the model.
+        frameProcessorInternal.aiCtx.fillStyle = 'black';
+        frameProcessorInternal.aiCtx.fillRect(0, 0, inputWidth, inputHeight);
+      }
+    }
     const frameImageDataForAI = frameProcessorInternal.aiCtx.getImageData(0, 0, inputWidth, inputHeight);
 
     const inputTensor = tf.tidy(() => {

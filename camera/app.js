@@ -110,18 +110,39 @@ createApp({
 
       ctx.drawImage(video.value, 0, 0, video.value.videoWidth, video.value.videoHeight);
 
-      const { width, height, offsetX, offsetY } = calculateVisibleArea();
-      const cropX = (offsetX / cameraCntr.value.clientWidth) * video.value.videoWidth;
-      const cropY = (offsetY / cameraCntr.value.clientHeight) * video.value.videoHeight;
-      const cropWidth = (width / cameraCntr.value.clientWidth) * video.value.videoWidth;
-      const cropHeight = (height / cameraCntr.value.clientHeight) * video.value.videoHeight;
+      // Calculate centered 16:9 crop
+      const vidWidth = video.value.videoWidth;
+      const vidHeight = video.value.videoHeight;
+      let sx = 0, sy = 0, sWidth = vidWidth, sHeight = vidHeight;
+      const targetAspectRatio = 16 / 9;
+      const currentAspectRatio = vidWidth / vidHeight;
 
-      const croppedCanvas = new OffscreenCanvas(cropWidth, cropHeight);
+      if (currentAspectRatio > targetAspectRatio) {
+        // Video is wider than 16:9. Crop sides.
+        sWidth = Math.round(vidHeight * targetAspectRatio);
+        sx = Math.round((vidWidth - sWidth) / 2);
+      } else if (currentAspectRatio < targetAspectRatio) {
+        // Video is taller than 16:9. Crop top/bottom.
+        sHeight = Math.round(vidWidth / targetAspectRatio);
+        sy = Math.round((vidHeight - sHeight) / 2);
+      }
+      // Ensure sx, sy, sWidth, sHeight are within bounds
+      sx = Math.max(0, sx);
+      sy = Math.max(0, sy);
+      sWidth = Math.max(0, Math.min(sWidth, vidWidth - sx));
+      sHeight = Math.max(0, Math.min(sHeight, vidHeight - sy));
+
+
+      const croppedCanvas = new OffscreenCanvas(sWidth, sHeight);
       const croppedCtx = croppedCanvas.getContext('2d');
+      if (!croppedCtx) {
+        alert("Failed to create cropped canvas context. Please try again.");
+        return;
+      }
       croppedCtx.drawImage(
         captureOffscreenCanvas,
-        cropX, cropY, cropWidth, cropHeight, // Source rectangle
-        0, 0, cropWidth, cropHeight         // Destination rectangle
+        sx, sy, sWidth, sHeight, // Source rectangle from original capture
+        0, 0, sWidth, sHeight    // Destination rectangle on croppedCanvas
       );
 
       try {

@@ -72,6 +72,7 @@ createApp({
       const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: "environment",
+          exact: targetAspectRatio,
           aspectRatio: { exact: targetAspectRatio },
           width: { ideal: idealCameraWidth },
           height: { ideal: idealCameraHeight },

@@ -67,7 +67,9 @@ createApp({
           aspectRatio: { exact: 9 / 16 },
           width: { ideal: 1920 },
           height: { ideal: 1080 },
-          zoom: { ideal: 1 },
+          advanced: [{
+            zoom: 1
+          }],
           focusMode: 'continuous'
         }
       });

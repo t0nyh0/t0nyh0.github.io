@@ -67,7 +67,7 @@ function initializeFrameProcessor(vueRefs, externalDeps) {
     let sx = 0, sy = 0, sWidth = 0, sHeight = 0; // Initialize crop parameters
 
     if (vidWidth > 0 && vidHeight > 0) {
-      // Calculate aspect ratio based on browser width and 3/5 of screen height
+      // Calculate aspect ratio based on browser width and 1/2 of screen height
       const viewportWidth = window.innerWidth;
       const viewportHeight = window.innerHeight;
       const targetViewHeight = viewportHeight * (2 / 5);

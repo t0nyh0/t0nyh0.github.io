@@ -27,17 +27,26 @@
 
                 <video class="monitor" ref="video" autoplay playsinline></video>
 
-                <div class="absolute top-0 p-2 text-center text-white text-sm font-black z-10 left-0 right-0 flex justify-center items-center">
-                    <span>
-                        <i class="fa-solid fa-sun mr-1"></i>
-                        {{ exposure }}%&nbsp;
-                        <template v-if="exposure > 70">(Too Light)</template>
-                        <template v-else-if="exposure < 30">(Too Dark)</template>
-                    </span>
-                    <span class="ml-4" v-if="angle !== null" :class="{'text-red-100': !isValidAngle}">
-                        <i class="fa-solid fa-compass mr-1"></i>
-                        {{ angle?.toFixed(0) }}°
-                    </span>
+                <div class="absolute top-2 left-2 text-sm font-black z-10 flex items-center" :class="{'text-green-500': isValidAngle, 'text-red-500': !isValidAngle}">
+                    <i class="fa-solid fa-compass mr-1"></i>
+                    {{ angle?.toFixed(0) }}°
+                </div>
+
+                <div class="absolute top-2 right-2 text-sm font-black z-10 flex items-center" :class="{'text-green-500': exposure > 30 && exposure < 70, 'text-red-500': exposure <= 30 || exposure >= 70}">
+                    <i class="fa-solid fa-sun mr-1"></i>
+                    {{ exposure }}%
+                </div>
+
+                <div class="absolute bottom-2 left-0 right-0 text-center text-sm font-black z-10" :class="{'text-green-500': isValidAngle, 'text-orange-500': !isValidAngle}">
+                    <template v-if="isValid">
+                        <i class="fa-solid fa-check mr-1"></i>
+                        Valid Angle
+                    </template>
+                    <template v-else>
+                        <div v-if="hasDetected && currentGuidelines">
+                            <p class="my-2" v-for="instruction in currentGuidelines.instructions" :key="instruction">{{ instruction }}</p>
+                        </div>
+                    </template>
                 </div>
 
                 <div class="absolute inset-0 border-8 border-red-500 border-opacity-80 z-10" v-if="!isValid"></div>
@@ -45,12 +54,8 @@
 
             <div class="flex-1 px-6 pt-6 pb-48 overflow-auto">
                 <div class="text-center">
-                    <h3 class="font-black mb-4 text-xl pb-2 border-b border-gray-100" v-if="!hasDetected">Detecting...</h3>
-                    <h3 class="font-black mb-4 text-xl pb-2 border-b border-gray-100" v-else-if="hasDetected && currentGuidelines && currentGuidelines.title">{{ currentGuidelines.title }}</h3>
-
-                    <div v-if="hasDetected && currentGuidelines">
-                        <p class="my-2" v-for="instruction in currentGuidelines.instructions" :key="instruction">{{ instruction }}</p>
-                    </div>
+                    <h3 class="text-gray-700 font-bold text-sm mb-4" v-if="!hasDetected">AI Output: Detecting...</h3>
+                    <h3 class="text-gray-700 font-bold text-sm mb-4" v-else-if="hasDetected && currentGuidelines && currentGuidelines.title">AI Output: {{ currentGuidelines.title }}</h3>
                 </div>
             </div>
 

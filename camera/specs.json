@@ -6,7 +6,7 @@
       "max": 95
     },
     "instructions": [
-      "This looks like a dish you should shoot from directly above."
+      "Capture at ~90° Angle Overhead"
     ]
   },
   {
@@ -16,7 +16,7 @@
       "max": 50
     },
     "instructions": [
-      "This looks like a dish you should shoot from an angle."
+      "Capture at ~45° Angle"
     ]
   },
   {
@@ -26,7 +26,7 @@
       "max": 30
     },
     "instructions": [
-      "This looks like a dish that you should shoot from straight on."
+      "Capture at ~0-30° Angle"
     ]
   },
   {

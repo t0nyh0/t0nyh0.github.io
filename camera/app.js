@@ -35,14 +35,16 @@ createApp({
           if (spec && spec.instructions) {
             return {
               title: label,
-              instructions: spec.instructions
+              instructions: spec.instructions,
+              image: spec.image
             };
           }
         }
         const defaultSpec = specs?.find(s => s.label === null);
         if (defaultSpec && defaultSpec.instructions) {
           return {
-            instructions: defaultSpec.instructions
+            instructions: defaultSpec.instructions,
+            image: spec.image
           };
         }
       }

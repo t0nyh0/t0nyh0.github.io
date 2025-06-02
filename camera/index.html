@@ -65,7 +65,7 @@
                                 'border-green-400 bg-green-200 bg-opacity-40': angle !== null && angle >= selectedOption.angle.min && angle <= selectedOption.angle.max,
                                 'border-yellow-400 bg-yellow-200 bg-opacity-30': !(angle !== null && angle >= selectedOption.angle.min && angle <= selectedOption.angle.max)
                              }"
-                             :style="{ top: `calc(${selectedOption.angle.min}% )`, height: `calc(${selectedOption.angle.max - selectedOption.angle.min}% )` }"></div>
+                             :style="{ top: `calc(100% - ${selectedOption.angle.max}% )`, height: `calc(${selectedOption.angle.max - selectedOption.angle.min}% )` }"></div>
 
                         <template v-for="n in 101">
                             <div :key="'minor-' + (n-1)" class="absolute left-0 w-2 h-px bg-gray-200" :style="{ top: `calc(${(n-1)}% - 0.5px)` }"></div>
@@ -74,9 +74,9 @@
                             <div :key="'major-' + (n-1)" class="absolute left-0 w-4 h-px bg-gray-300" :style="{ top: `calc(${(n-1)*5}% - 0.5px)` }"></div>
                         </template>
                         <!-- Labels for 30, 45, 90 degrees -->
-                        <span class="absolute left-6 text-xs text-white" style="top: calc(30% - 0.5em);">30°</span>
-                        <span class="absolute left-6 text-xs text-white" style="top: calc(45% - 0.5em);">45°</span>
-                        <span class="absolute left-6 text-xs text-white" style="top: calc(90% - 0.5em);">90°</span>
+                        <span class="absolute left-6 text-xs text-white" style="top: calc(10% - 0.5em);">90°</span>
+                        <span class="absolute left-6 text-xs text-white" style="top: calc(55% - 0.5em);">45°</span>
+                        <span class="absolute left-6 text-xs text-white" style="top: calc(70% - 0.5em);">30°</span>
                     </div>
                 </div>
 

@@ -28,7 +28,7 @@
             <div class="relative overflow-hidden h-1/2 bg-black" ref="cameraCntr">
                 <video class="monitor" ref="video" autoplay playsinline></video>
                 <div class="absolute top-3 right-2 text-sm font-black z-10 flex items-center">
-                    <div class="mr-8" :class="{'text-green-500': isValidAngle, 'text-red-500': !isValidAngle}" v-if="angle">
+                    <div class="mr-6" :class="{'text-green-500': isValidAngle, 'text-red-500': !isValidAngle}" v-if="angle">
                         <i class="fa-solid fa-compass mr-1"></i>
                         {{ angle?.toFixed(0) }}°
                     </div>
@@ -86,7 +86,7 @@
                         'border-green-500': selectedOption && angle !== null && angle >= selectedOption.angle.min && angle <= selectedOption.angle.max,
                         'border-orange-500': !(selectedOption && angle !== null && angle >= selectedOption.angle.min && angle <= selectedOption.angle.max)
                     }"
-                    :style="{ top: angle !== null ? `calc(${90 - angle}% )` : '50%' }"
+                    :style="{ top: angle !== null ? `calc(${100 - angle}% )` : '50%' }"
                 ></div>
             </div>
 

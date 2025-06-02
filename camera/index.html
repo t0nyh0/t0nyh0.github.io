@@ -25,7 +25,7 @@
             </div>
         </div>
         <div v-else-if="pane === 'camera'" class="flex flex-col h-screen">
-            <div class="relative overflow-hidden h-1/2 bg-black outline-2 outline-red-500" ref="cameraCntr">
+            <div class="relative overflow-hidden h-1/2 bg-black" ref="cameraCntr">
                 <video class="monitor" ref="video" autoplay playsinline></video>
                 <div class="absolute top-3 right-2 text-sm font-black z-10 flex items-center">
                     <div class="mr-8" :class="{'text-green-500': isValidAngle, 'text-red-500': !isValidAngle}" v-if="angle">

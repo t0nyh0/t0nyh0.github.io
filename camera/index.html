@@ -86,7 +86,7 @@
                         'border-green-500': selectedOption && angle !== null && angle >= selectedOption.angle.min && angle <= selectedOption.angle.max,
                         'border-orange-500': !(selectedOption && angle !== null && angle >= selectedOption.angle.min && angle <= selectedOption.angle.max)
                     }"
-                    :style="{ top: angle !== null ? `calc(${100 - angle}% )` : '50%' }"
+                    :style="{ top: `calc(${100 - angle}% )` }"
                 ></div>
             </div>
 

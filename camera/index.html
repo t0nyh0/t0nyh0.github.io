@@ -56,7 +56,7 @@
 
                 <div class="absolute inset-0 border-8 border-red-500 border-opacity-80 z-10" v-if="!isValid"></div>
 
-                <div class="absolute left-0 top-0 bottom-0 flex flex-col z-20 bg-black bg-opacity-20 w-12">
+                <div class="absolute left-0 top-0 bottom-0 flex flex-col z-20 w-16" style="background: linear-gradient(to right, #222 0%, transparent 100%); background-blend-mode: multiply; opacity: 0.85;">
                     <div class="relative w-6 h-full">
                         <!-- Valid angle range box -->
                         <div v-if="selectedOption && selectedOption.angle"
@@ -93,7 +93,7 @@
             </div>
 
             <div class="flex-1 px-6 pt-2 pb-48 overflow-auto text-center" v-if="selectedOption">
-                <h3 class="font-bold text-lg mt-6 mb-2">{{ selectedOption?.type }}</h3>
+                <h3 class="font-black text-xl mt-6 mb-2">{{ selectedOption?.type }}</h3>
                 <p class="mb-6">Position camera at a {{ selectedOption?.angle?.min }}-{{ selectedOption?.angle?.max }}° angle for best results.</p>
 
                 <a @click.prevent="pane = 'selectType'" class="text-blue-500 text-sm font-bold">Change Type</a>

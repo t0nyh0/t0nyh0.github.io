@@ -51,29 +51,30 @@
 
                 <div class="absolute inset-0 border-8 border-red-500 border-opacity-80 z-10" v-if="!isValid"></div>
 
-                <div class="absolute left-1 top-0 bottom-0 flex flex-col justify-center items-center z-10">
+                <!-- Dynamic orange line that extends full width -->
+                <div class="absolute left-0 right-0 transform -translate-y-1/2 h-0.5 border-t-2 border-dashed border-orange-500 z-10" :style="{ top: `${(90 - angle) / 90 * 100}%` }"></div>
+
+                <div class="absolute left-0 top-0 bottom-0 flex flex-col justify-center items-center z-20">
                     <div class="relative w-6 h-full">
                         <!-- Section for 80-100 -->
                         <div class="absolute top-0 left-0 w-full h-[22%] bg-gray-100 opacity-50"></div>
                         <div class="absolute top-[11%] left-0 w-full h-px bg-gray-300"></div>
-                        <span class="absolute top-[11%] left-6 text-xs text-gray-500">90°</span>
+                        <span class="absolute top-[11%] left-7 text-xs text-gray-800">90°</span>
 
                         <!-- Section for 40-50 -->
                         <div class="absolute top-[44%] left-0 w-full h-[11%] bg-gray-100 opacity-50"></div>
                         <div class="absolute top-[44%] left-0 w-full h-px bg-gray-300"></div>
-                        <span class="absolute top-[44%] left-6 text-xs text-gray-500">50°</span>
+                        <span class="absolute top-[43%] left-7 text-xs text-gray-800">50°</span>
                         <div class="absolute top-[55%] left-0 w-full h-px bg-gray-300"></div>
-                        <span class="absolute top-[55%] left-6 text-xs text-gray-500">40°</span>
+                        <span class="absolute top-[54%] left-7 text-xs text-gray-800">40°</span>
 
                         <!-- Section for 0-30 -->
                         <div class="absolute top-[77%] left-0 w-full h-[33%] bg-gray-100 opacity-50"></div>
                         <div class="absolute top-[77%] left-0 w-full h-px bg-gray-300"></div>
-                        <span class="absolute top-[77%] left-6 text-xs text-gray-500">30°</span>
+                        <span class="absolute top-[76%] left-7 text-xs text-gray-800">30°</span>
                         <div class="absolute top-[100%] left-0 w-full h-px bg-gray-300"></div>
-                        <span class="absolute top-[100%] left-6 text-xs text-gray-500">0°</span>
+                        <span class="absolute top-[100%] left-7 text-xs text-gray-800">0°</span>
 
-                        <!-- Dynamic orange line -->
-                        <div class="absolute left-0 right-0 transform -translate-y-1/2 h-0.5 border-t-2 border-dashed border-orange-500" :style="{ top: `${(90 - angle) / 90 * 100}%` }"></div>
                     </div>
                 </div>
             </div>

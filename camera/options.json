@@ -1,0 +1,65 @@
+[
+  {
+    "type": "Main Course",
+    "angle": {
+      "min": 40,
+      "max": 50
+    }
+  },
+  {
+    "type": "Salad",
+    "angle": {
+      "min": 40,
+      "max": 50
+    }
+  },
+  {
+    "type": "Dessert",
+    "angle": {
+      "min": 40,
+      "max": 50
+    }
+  },
+  {
+    "type": "Side / Appetizer",
+    "angle": {
+      "min": 40,
+      "max": 50
+    }
+  },
+  {
+    "type": "Hero Image",
+    "angle": {
+      "min": 80,
+      "max": 100
+    }
+  },
+  {
+    "type": "Platter / Large Share Plate",
+    "angle": {
+      "min": 80,
+      "max": 100
+    }
+  },
+  {
+    "type": "Pizza",
+    "angle": {
+      "min": 80,
+      "max": 100
+    }
+  },
+  {
+    "type": "Burger",
+    "angle": {
+      "min": 0,
+      "max": 30
+    }
+  },
+  {
+    "type": "Drink/Beverage",
+    "angle": {
+      "min": 0,
+      "max": 30
+    }
+  }
+]

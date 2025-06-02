@@ -1,0 +1,6 @@
+.monitor {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  border: 0;
+}
